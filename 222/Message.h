@@ -137,7 +137,7 @@ namespace ecs
 		std::vector<std::unique_ptr<MessageBase>> msgBroadcastList0;
 		std::vector<std::unique_ptr<MessageBase>> msgBroadcastList1;
 
-		bool active;
+		bool active = true;
 
 		std::mutex mutex;
 

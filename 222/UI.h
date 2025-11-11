@@ -37,7 +37,7 @@ namespace ui
 		std::string text;
 
 		ButtonCom(const Vector2 pos, const float width, const float height, const int fontSize, const Color textColor, const char* icoPath, std::string text, const char* fontPath) :
-			x(pos.x), y(pos.y), width(width), height(height), fontSize(fontSize), isIcon(true), textColor(textColor), text(text), font(fontPath)
+			x(pos.x), y(pos.y), width(width), height(height), fontSize(fontSize), isIcon(true), textColor(textColor), text(text), font(fontPath), color({0})
 		{
 			if (icoPath != nullptr)
 			{
@@ -46,7 +46,7 @@ namespace ui
 		}
 
 		ButtonCom(const Vector2 pos, const float width, const float height, const int fontSize, const Color textColor, const char* icoPath, std::string text, Font font) :
-			x(pos.x), y(pos.y), width(width), height(height), fontSize(fontSize), isIcon(true), textColor(textColor), text(text), font(font)
+			x(pos.x), y(pos.y), width(width), height(height), fontSize(fontSize), isIcon(true), textColor(textColor), text(text), font(font), color({ 0 })
 		{
 			if (icoPath != nullptr)
 			{
@@ -92,7 +92,7 @@ namespace ui
 		int fontSize;
 
 	public:
-		ButtonDraw(const ButtonCom& button) : pos({ button.x, button.y }), covered({ button.width, button.height }), font(button.font), isIcon(button.isIcon), text(button.text), fontSize(button.fontSize), textColor(button.textColor)
+		ButtonDraw(const ButtonCom& button) : pos({ button.x, button.y }), covered({ button.width, button.height }), font(button.font), isIcon(button.isIcon), text(button.text), fontSize(button.fontSize), textColor(button.textColor), color({ 0 })
 		{
 			if (button.isIcon)
 			{
@@ -555,7 +555,7 @@ namespace ui
 			float fontSize,
 			float spacing,
 			float rotation = 0
-		) : fontData(fontData), text(text), position(position), textColor(textColor), fontSize(fontSize), spacing(spacing), rotation(rotation), layerDepth(layerDepth)
+		) : fontData(fontData), text(text), position(position), textColor(textColor), fontSize(fontSize), spacing(spacing), rotation(rotation), layerDepth(layerDepth), initialized(false)
 		{
 			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), fontSize));
 		}
@@ -886,5 +886,55 @@ namespace ui
 	{
 		world.addPool<SliderCom>();
 		world.addSystem(SliderSystem(world.getDoubleBuffer<SliderCom>(), world.getUiLayer()));
+	}
+
+	struct ImageBoxExCom
+	{
+		Vector2 pos;
+		float scale;
+		rlRAII::Texture2DRAII img;
+		int layerDepth;
+	};
+
+	class ImageBoxExDraw : public ecs::DrawBase
+	{
+	private:
+		Vector2 pos;
+		float scale;
+		rlRAII::Texture2DRAII img;
+
+	public:
+		ImageBoxExDraw(const Vector2 pos, const float scale, const rlRAII::Texture2DRAII& img) : pos(pos), scale(scale), img(img) {}
+
+		void draw() override
+		{
+			DrawTextureEx(img.get(), pos, 0.0f, scale, WHITE);
+		}
+	};
+
+	class ImageBoxExSystem : public ecs::SystemBase
+	{
+		private:
+		ecs::DoubleComs<ImageBoxExCom>& imageBoxes;
+		ecs::Layers& layers;
+
+	public:
+		ImageBoxExSystem(ecs::DoubleComs<ImageBoxExCom>* imageBoxes, ecs::Layers* layers) : imageBoxes(*imageBoxes), layers(*layers) {}
+		void update()
+		{
+			imageBoxes.active()->forEach
+			(
+				[this](ecs::entity id, ImageBoxExCom& imgBox)
+				{
+					layers[imgBox.layerDepth].push_back(std::make_unique<ImageBoxExDraw>(ImageBoxExDraw{ imgBox.pos, imgBox.scale, imgBox.img }));
+				}
+			);
+		}
+	};
+
+	void ApplyImageBoxEx(ecs::World2D& world)
+	{
+		world.addPool<ImageBoxExCom>();
+		world.addSystem(ImageBoxExSystem(world.getDoubleBuffer<ImageBoxExCom>(), world.getUnitsLayer()));
 	}
 }

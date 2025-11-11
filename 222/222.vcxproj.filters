@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="外部存储">
+      <UniqueIdentifier>{945ad43a-7ef1-48a7-9a75-2f70ac60e380}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -38,7 +41,7 @@
     <ClInclude Include="World.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Galgame.h">
+    <ClInclude Include="VisualNovel.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RLUtils.h">
@@ -47,9 +50,15 @@
     <ClInclude Include="Animation.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ScriptLoader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="文本.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="Script.txt">
       <Filter>资源文件</Filter>
     </Text>
   </ItemGroup>

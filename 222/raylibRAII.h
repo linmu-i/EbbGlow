@@ -739,6 +739,243 @@ namespace rlRAII
 		char* name;
 
 	public:
+		class Iterator
+		{
+		private:
+			size_t fileSize;
+			int64_t offset;
+			unsigned char* pointer;
+
+		public:
+			Iterator() : fileSize(0), offset(0), pointer(nullptr) {}
+			Iterator(FileRAII file) : fileSize(file.dataSize), pointer(file.fileData), offset(0) {}
+			Iterator(FileRAII file, int64_t offset) : fileSize(file.dataSize), pointer(file.fileData + offset), offset(offset) {}
+
+			Iterator(const Iterator& other) : fileSize(other.fileSize), offset(other.offset), pointer(other.pointer) {}
+			Iterator(Iterator&& other) : fileSize(other.fileSize), offset(other.offset), pointer(other.pointer)
+			{
+				other.fileSize = 0;
+				other.offset = 0;
+				other.pointer = nullptr;
+			}
+
+			Iterator& operator=(const Iterator& other) noexcept
+			{
+				if (this == &other)
+				{
+					return *this;
+				}
+				fileSize = other.fileSize;
+				offset = other.offset;
+				pointer = other.pointer;
+				return *this;
+			}
+
+			Iterator& operator=(Iterator&& other) noexcept
+			{
+				if (this == &other)
+				{
+					return *this;
+				}
+				fileSize = other.fileSize;
+				offset = other.offset;
+				pointer = other.pointer;
+				other.fileSize = 0;
+				other.offset = 0;
+				other.pointer = nullptr;
+				return *this;
+			}
+
+			Iterator& operator++() noexcept
+			{
+				++pointer;
+				++offset;
+				return *this;
+			}
+
+			Iterator operator++(int) noexcept
+			{
+				Iterator tmp = *this;
+				++pointer;
+				++offset;
+				return tmp;
+			}
+
+			Iterator& operator--() noexcept
+			{
+				--pointer;
+				--offset;
+				return *this;
+			}
+
+			Iterator operator--(int) noexcept
+			{
+				Iterator tmp = *this;
+				--pointer;
+				--offset;
+				return tmp;
+			}
+
+			unsigned char& operator*() noexcept
+			{
+				return *pointer;
+			}
+
+			const unsigned char& operator*() const noexcept
+			{
+				return *pointer;
+			}
+
+			unsigned char& operator[](int64_t _offset) noexcept
+			{
+				return pointer[_offset];
+			}
+
+			const unsigned char& operator[](int64_t _offset) const noexcept
+			{
+				return pointer[_offset];
+			}
+
+			unsigned char& at(int64_t _offset)
+			{
+				if (offset + _offset < 0)
+				{
+					throw std::out_of_range("Before File.");
+				}
+				if (offset + _offset >= fileSize)
+				{
+					throw std::out_of_range("After File.");
+				}
+				return pointer[_offset];
+			}
+
+			const unsigned char& at(int64_t _offset) const
+			{
+				if (offset + _offset < 0)
+				{
+					throw std::out_of_range("Before File.");
+				}
+				if (offset + _offset >= fileSize)
+				{
+					throw std::out_of_range("After File.");
+				}
+				return pointer[_offset];
+			}
+
+			bool eof() const noexcept
+			{
+				if (offset >= fileSize || offset < 0)
+				{
+					return true;
+				}
+				return false;
+			}
+
+			bool valid() const noexcept
+			{
+				return pointer;
+			}
+
+			void reset() noexcept
+			{
+				if (pointer)
+				{
+					pointer -= offset;
+					offset = 0;
+				}
+			}
+
+			explicit operator bool() const noexcept
+			{
+				return !eof();
+			}
+
+			Iterator& operator+=(int64_t _offset) noexcept
+			{
+				offset += _offset;
+				pointer += _offset;
+				return *this;
+			}
+
+			Iterator& operator-=(int64_t _offset) noexcept
+			{
+				offset -= _offset;
+				pointer -= _offset;
+				return *this;
+			}
+
+			Iterator operator+(int64_t _offset) const noexcept
+			{
+				Iterator result = *this;
+				result.offset += _offset;
+				result.pointer += _offset;
+				return result;
+			}
+
+			Iterator operator-(int64_t _offset) const noexcept
+			{
+				Iterator result = *this;
+				result.offset -= _offset;
+				result.pointer -= _offset;
+				return result;
+			}
+
+			int64_t operator-(const Iterator& other) const noexcept
+			{
+				return offset - other.offset;
+			}
+
+			bool operator==(const Iterator& other) const noexcept
+			{
+				return pointer == other.pointer;
+			}
+
+			bool operator>(const Iterator& other) const noexcept
+			{
+				return pointer > other.pointer;
+			}
+
+			bool operator>=(const Iterator& other) const noexcept
+			{
+				return pointer >= other.pointer;
+			}
+
+			bool operator<(const Iterator& other) const noexcept
+			{
+				return pointer < other.pointer;
+			}
+
+			bool operator<=(const Iterator& other) const noexcept
+			{
+				return pointer <= other.pointer;
+			}
+
+			bool operator!=(const Iterator& other) const noexcept
+			{
+				return pointer != other.pointer;
+			}
+
+			size_t size() const noexcept
+			{
+				return fileSize;
+			}
+
+			size_t remaining() const noexcept
+			{
+				return fileSize - offset - 1;
+			}
+
+			int64_t position() const noexcept
+			{
+				return offset;
+			}
+
+			unsigned char* get() const noexcept
+			{
+				return pointer;
+			}
+		};
+
 		FileRAII() noexcept : ref(nullptr), fileData(nullptr), dataSize(0), name(nullptr) {}
 		FileRAII(const char* filePath) : ref(new(std::nothrow) size_t(1))
 		{
@@ -752,11 +989,10 @@ namespace rlRAII
 			strcpy(this->name, name);
 		}
 
-		FileRAII(const FileRAII& other) noexcept : fileData(other.fileData), ref(other.ref), dataSize(other.dataSize)
+		FileRAII(const FileRAII& other) noexcept : fileData(other.fileData), ref(other.ref), dataSize(other.dataSize), name(other.name)
 		{
 			if (ref)
 			{
-				name = other.name;
 				++(*ref);
 			}
 		}
@@ -765,6 +1001,7 @@ namespace rlRAII
 			other.fileData = nullptr;
 			other.ref = nullptr;
 			other.name = nullptr;
+			other.dataSize = 0;
 		}
 
 		FileRAII& operator=(const FileRAII& other) noexcept
@@ -837,7 +1074,7 @@ namespace rlRAII
 			}
 		}
 
-		unsigned char* get() noexcept
+		unsigned char* get() const noexcept
 		{
 			return fileData;
 		}
@@ -860,6 +1097,16 @@ namespace rlRAII
 		bool valid() const noexcept
 		{
 			return ref;
+		}
+
+		Iterator begin()
+		{
+			return Iterator(*this);
+		}
+		
+		Iterator end()
+		{
+			return Iterator(*this, dataSize);
 		}
 	};
 

@@ -149,7 +149,7 @@ namespace ecs
 		{
 			for (size_t i = 0; i < dataVector.size(); i++)
 			{
-				std::forward<Func>(func)(indexToEntity[i], dataVector[i], std::forward<Args>(args)...);
+				func(indexToEntity[i], dataVector[i], std::forward<Args>(args)...);
 			}
 		}
 		template<typename Func, typename ...Args>
@@ -157,7 +157,7 @@ namespace ecs
 		{
 			for (size_t i = 0; i < dataVector.size(); i++)
 			{
-				std::forward<Func>(func)(indexToEntity[i], dataVector[i], std::forward<Args>(args)...);
+				func(indexToEntity[i], dataVector[i], std::forward<Args>(args)...);
 			}
 		}
 

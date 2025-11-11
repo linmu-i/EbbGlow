@@ -273,7 +273,7 @@ Font DynamicLoadFont(const char* text, const char* fontPath, float fontSize)
 	return font;
 }
 
-Font DynamicLoadFontFromMemory(const char* text, const char* fileName, unsigned char* fontData, int dataSize, float fontSize)
+Font DynamicLoadFontFromMemory(const char* text, const char* fileName, const unsigned char* fontData, int dataSize, float fontSize)
 {
 	int codepointCount = 0;
 	//std::vector<int> codepoints = GetUnicodePoints(text);
@@ -287,7 +287,8 @@ Font DynamicLoadFontFromMemory(const char* text, const char* fileName, unsigned 
 	{
 		--p;
 	} while (*p != '.' && p != fileName);
-	Font font = LoadFontFromMemory(p, fontData, dataSize, fontSize, codepoints, codepointCount);
+	Font font;
+	font = LoadFontFromMemory(p, fontData, dataSize, 50/*fontSize*/, codepoints, codepointCount);
 	UnloadCodepoints(codepoints);
 	SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
 	return font;

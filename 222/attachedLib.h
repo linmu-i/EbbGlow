@@ -117,194 +117,77 @@ public:
 	}
 };
 
-/*
-#include <vector>
-#include <stack>
 
-template<typename T>
-class reuseableArray
+int ExecuteBF(const char* cmds, size_t size, std::function<int(void)> input = getchar, std::function<void(int)> output = putchar)
 {
-private:
-	std::vector<size_t> prevVector;
-	std::vector<T> dataVector;
-	std::vector<size_t> nextVector;
-	std::stack<size_t> inactiveStack;
-	size_t activeBegin;
-	size_t activeEnd;
-	size_t activeCount;
-
-public:
-	reuseableArray() : activeBegin(SIZE_MAX), activeEnd(SIZE_MAX), activeCount(0) {}
-
-	class iterator
+	std::vector<char> memory;
+	memory.resize(size, 0);
+	const char* cmd = cmds;
+	char* pointer = memory.data();
+	int loopCount = 0;
+	while (*cmd != '\0')
 	{
-	private:
-		size_t idx;
-		reuseableArray& reVec;
-	public:
-		iterator(size_t i, reuseableArray& rV) : idx(i), reVec(rV) {}
-		friend class reuseableArray;
-		T& operator*()
+		if (cmd < cmds || pointer < memory.data() || pointer >= memory.data() + size)
+			return 0;
+		if (loopCount == 0)
 		{
-			return reVec.dataVector[idx];
-		}
-		const T& operator*() const
-		{
-			return reVec.dataVector[idx];
-		}
-		iterator operator++()
-		{
-			if (this->idx != SIZE_MAX)
+			switch (*cmd)
 			{
-				idx = reVec.nextVector[idx];
+			case '>':
+				++pointer;
+				++cmd;
+				break;
+			case '<':
+				--pointer;
+				++cmd;
+				break;
+			case '+':
+				++(*pointer);
+				++cmd;
+				break;
+			case '-':
+				--(*pointer);
+				++cmd;
+				break;
+			case '.':
+				output(*pointer);
+				++cmd;
+				break;
+			case ',':
+				*pointer = input();
+				++cmd;
+				break;
+			case '[':
+				if (!*pointer)
+					loopCount = -1;
+				else
+					++cmd;
+				break;
+			case ']':
+				if (*pointer)
+					loopCount = 1;
+				else
+					++cmd;
+				break;
+			default:
+				++cmd;
 			}
-			return *this;
-		}
-		iterator operator++(int)
-		{
-			iterator tmp = *this;
-			if (this->idx != SIZE_MAX)
-			{
-				idx = reVec.nextVector[idx];
-			}
-			return tmp;
-		}
-		iterator operator--()
-		{
-			if (idx == SIZE_MAX)
-			{
-				idx == reVec.activeEnd;
-			}
-			else
-			{
-				if (reVec.prevVector[idx] != SIZE_MAX)
-				{
-					idx = reVec.prevVector[idx];
-				}
-			}
-			return *this;
-		}
-		iterator operator--(int)
-		{
-			iterator tmp = *this;
-			if (idx == SIZE_MAX)
-			{
-				idx = reVec.activeEnd;
-			}
-			else
-			{
-				if (reVec.prevVector[idx] != SIZE_MAX)
-				{
-					idx = reVec.prevVector[idx];
-				}
-			}
-			return tmp;
-		}
-		bool operator==(const iterator iter)
-		{
-			return &(iter.reVec) == &(this->reVec) && iter.idx == this->idx;
-		}
-		bool operator!=(const iterator iter)
-		{
-			return !(*this == iter);
-		}
-	};
-
-	reuseableArray& insert(const T& d)
-	{
-		if (!inactiveStack.empty())
-		{
-			size_t idx = inactiveStack.top();
-			dataVector[idx] = d;
-			if (nextVector[idx] != SIZE_MAX)
-			{
-				prevVector[nextVector[idx]] = idx;
-			}
-			else
-			{
-				activeEnd = idx;
-			}
-			if (prevVector[idx] != SIZE_MAX)
-			{
-				nextVector[prevVector[idx]] = idx;
-			}
-			else
-			{
-				activeBegin = idx;
-			}
-			inactiveStack.pop();
-		}
-		else if (inactiveStack.empty() && !dataVector.empty())
-		{
-			dataVector.push_back(d);
-			prevVector.push_back(dataVector.size() - 2);
-			nextVector.push_back(SIZE_MAX);
-			nextVector[dataVector.size() - 2] = dataVector.size() - 1;
-			activeEnd = dataVector.size() - 1;
-		}
-		else if (inactiveStack.empty() && dataVector.empty())
-		{
-			dataVector.push_back(d);
-			prevVector.push_back(SIZE_MAX);
-			nextVector.push_back(SIZE_MAX);
-			activeBegin = 0;
-		}
-		activeCount++;
-		return *this;
-	}
-	reuseableArray erase(const iterator iter)
-	{
-		if (nextVector[iter.idx] != SIZE_MAX && prevVector[iter.idx] != SIZE_MAX)
-		{
-			nextVector[prevVector[iter.idx]] = nextVector[iter.idx];
-			prevVector[nextVector[iter.idx]] = prevVector[iter.idx];
-		}
-		else if (nextVector[iter.idx] == SIZE_MAX && prevVector[iter.idx] != SIZE_MAX)
-		{
-			nextVector[prevVector[iter.idx]] = SIZE_MAX;
-			activeEnd = prevVector[iter.idx];
-		}
-		else if (nextVector[iter.idx] != SIZE_MAX && prevVector[iter.idx] == SIZE_MAX)
-		{
-			prevVector[nextVector[iter.idx]] = SIZE_MAX;
-			activeBegin = nextVector[iter.idx];
 		}
 		else
 		{
-			activeBegin = SIZE_MAX;
-			activeEnd = SIZE_MAX;
-		}
-		inactiveStack.push(iter.idx);
-		activeCount--;
-		dataVector[iter.idx].~T();
-		return *this;
-	}
-	void clear()
-	{
-		dataVector.clear();
-		prevVector.clear();
-		nextVector.clear();
-		activeBegin = SIZE_MAX;
-		activeEnd = SIZE_MAX;
-		while (!inactiveStack.empty())
-		{
-			inactiveStack.pop();
+			if (loopCount < 0)
+			{
+				++cmd;
+			}
+			else
+			{
+				--cmd;
+			}
+			if (*cmd == ']')
+				++loopCount;
+			if (*cmd == '[')
+				--loopCount;
 		}
 	}
-	iterator begin()
-	{
-		return iterator(activeBegin, *this);
-	}
-	iterator end()
-	{
-		return iterator(SIZE_MAX, *this);
-	}
-	size_t size()
-	{
-		return activeCount;
-	}
-	bool empty()
-	{
-		return activeCount == 0ull;
-	}
-};*/
+	return (loopCount == 0 ? 1 : 0);
+}

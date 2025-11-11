@@ -4,16 +4,20 @@
 #include "UI.h"
 #include "Animation.h"
 #include "RLUtils.h"
-#include "Galgame.h"
+#include "VisualNovel.h"
 
 #include <stdlib.h>
+#include <rlgl.h>
 
-const char* FONT_PATH = R"(E:\C,C++\222\222\resource\font\SourceHanSansCN\SourceHanSansCN-Bold.otf)";
+const char* FONT_PATH = R"(resource\font\SourceHanSansCN\SourceHanSansCN-Bold.otf)";
+//const char* FONT_PATH = R"(D:\Downloads\LXGWNeoXiHei.ttf)";
 
 rlRAII::FileRAII FontData(FONT_PATH);
 
 constexpr int WinWidth = 1920;
 constexpr int WinHeight = 1080;
+
+visualnovel::VisualNovelConfig CFG;//{ 0, 1, 0, 1.0f, 40, "", 1920, 1080};
 
 enum class AllStates : uint8_t
 {
@@ -85,7 +89,6 @@ public:
 		buttonExId = this->getEntityManager()->getId();
 		animationId = this->getEntityManager()->getId();
 
-		//const char* fontPath = "resource\\font\\SiYuanHeiTi-Regular\\SourceHanSansSC-Regular-2.otf";
 		rlRAII::Texture2DRAII baseIcon = LoadTexture("resource\\img\\按钮基本.png");
 		rlRAII::Texture2DRAII hoverIcon = LoadTexture("resource\\img\\按钮悬浮.png");
 		rlRAII::Texture2DRAII pressIcon = LoadTexture("resource\\img\\按钮按下.png");
@@ -180,7 +183,7 @@ private:
 			DrawCircle(1010, 536, 10, WHITE);
 		}
 	};*/
-
+	
 	class BG : public ecs::DrawBase
 	{
 	private:
@@ -227,7 +230,7 @@ public:
 		musicDynamicSlider = this->getEntityManager()->getId();
 
 		this->createUnit(back, ui::ButtonCom({ 150,150 }, 300, 80, 50, WHITE, BLUE, "Back", nullptr));
-		this->createUnit(select, ui::SwitchCom(12, {0xaa, 0xaa, 0xff, 0xff}, { 550, 530 }, 3));//ui::ButtonCom({ 1000,500 }, 20, 20, 100, BLACK, nullptr, ".", nullptr));
+		this->createUnit(select, ui::SwitchCom(15, {0xaa, 0xaa, 0xff, 0xff}, { 550, 530 }, 3));//ui::ButtonCom({ 1000,500 }, 20, 20, 100, BLACK, nullptr, ".", nullptr));
 		//this->createUnit(text, ui::ButtonCom({ 850,537 }, 0, 0, 50, WHITE, BLUE, "ShowFPS", nullptr));
 		this->createUnit(text, ui::TextBoxExCom(FontData, u8"显示帧率: ", { 350,500 }, WHITE, 5, 50, 5));
 		this->createUnit(mscVlm, ui::TextBoxExCom(FontData, u8"音量调节: ", { 850,500 }, WHITE, 5, 50, 5));
@@ -278,6 +281,8 @@ private:
 
 	int textId;
 
+	bool skip = false;
+
 public:
 	MainScene(ecs::World2D* world, gotoNode<SceneBase> selfNode, gotoNode<SceneBase> nextNode, std::string text0, std::string text1, std::string font) : world(world),selfNode(selfNode), nextNode(nextNode), isInitialized(false), text0(text0), text1(text1), font(font) {}
 
@@ -285,12 +290,22 @@ public:
 	{
 		if (isInitialized)
 		{
-			if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL))
+			if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL) || IsKeyPressed(KEY_SPACE))
 			{
-				world->deleteUnit(textId);
-				world->getEntityManager()->recycleId(textId);
-				isInitialized = false;
-				return nextNode;
+				auto active = world->getDoubleBuffer<visualnovel::StandardTextBox>()->active()->get(textId);
+				//auto inActive = world->getDoubleBuffer<galgame::StandardTextBox>()->active()->get(textId);
+				if (active->activePixel >= active->totalPixel)
+				{
+					world->deleteUnit(textId);
+					world->getEntityManager()->recycleId(textId);
+					isInitialized = false;
+					return nextNode;
+				}
+				else
+				{
+					world->getSystem<visualnovel::StandardTextBoxSystem>()->skip(textId);
+					return selfNode;
+				}
 			}
 			else
 			{
@@ -300,15 +315,15 @@ public:
 		else
 		{
 			textId = world->getEntityManager()->getId();
-			//world->createUnit(textId, ui::TextBoxExCom{ FontData, text, {480, 480}, WHITE, 8, 30, 3 });
-			world->createUnit(textId, gal::StandardTextBox(
-				text0,//u8"一段非常之长的，可用于测试自动换行的，包含符号的，没有任何现实意义与象征意义的，随便乱打的，废话连篇的测试文本",
-				text1,//u8"非常に長い一段で、自動改行のテストに使用できる、意味や象徴的な意味のない、無作為に打たれた、冗長なテストテキストです。",
-				50,
+			world->createUnit(textId, visualnovel::StandardTextBox(
+				text0,
+				text1,
+				40,
 				FontData,
 				1.0f,
 				{ float(GetScreenWidth() / 6), float(GetScreenHeight() / 3 * 2) },
-				GetScreenWidth() / 3 * 2
+				GetScreenWidth() / 3 * 2,
+				{ 255, 255, 255, 255 }
 			));
 			isInitialized = true;
 			return selfNode;
@@ -333,7 +348,7 @@ private:
 
 public:
 	SelectScene(ecs::World2D* world, gotoNode<SceneBase> selfNode, gotoNode<SceneBase> nextNode0, gotoNode<SceneBase> nextNode1, std::string font)
-		: world(world), selfNode(selfNode), nextNode0(nextNode0), nextNode1(nextNode1), font(font) {}
+		: world(world), selfNode(selfNode), nextNode0(nextNode0), nextNode1(nextNode1), font(font), isInitialized(false) {}
 
 	gotoNode<SceneBase> update() override
 	{
@@ -465,7 +480,7 @@ public:
 			}
 			else
 			{
-				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL))
+				if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL) || IsKeyPressed(KEY_SPACE))
 				{
 					world->deleteUnit(textId);
 					world->getEntityManager()->recycleId(textId);
@@ -482,14 +497,15 @@ public:
 		else
 		{
 			textId = world->getEntityManager()->getId();
-			world->createUnit(textId, gal::StandardTextBox(
+			world->createUnit(textId, visualnovel::StandardTextBox(
 				text0,//u8"一段非常之长的，可用于测试自动换行的，包含符号的，没有任何现实意义与象征意义的，随便乱打的，废话连篇的测试文本",
 				text1,//u8"非常に長い一段で、自動改行のテストに使用できる、意味や象徴的な意味のない、無作為に打たれた、冗長なテストテキストです。",
-				50,
+				40,
 				FontData,
 				1.0f,
 				{ float(GetScreenWidth() / 6), float(GetScreenHeight() / 3 * 2) },
-				GetScreenWidth() / 3 * 2
+				GetScreenWidth() / 3 * 2,
+				{ 255, 255, 255, 255 }
 			));
 			isInitialized = true;
 			return selfNode;
@@ -564,7 +580,7 @@ public:
 		ui::ApplyTextBoxEx(*this);
 		ui::ApplyButtonEx(*this);
 		ui::ApplyButton(*this);
-		gal::ApplyStandardTextBox(*this);
+		visualnovel::ApplyStandardTextBox(*this, CFG);
 
 		this->addSystem(System(mainList, volume));
 	}
@@ -573,16 +589,20 @@ public:
 
 
 
-int main()
+int main0()
 {
-	SetConfigFlags(FLAG_WINDOW_UNDECORATED | FLAG_WINDOW_ALWAYS_RUN);
+	CFG.ScreenWidth = 1920;
+	CFG.ScreenHeight = 1080;
+	CFG.textSpeed = 1.0f;
+
+
+	SetConfigFlags(FLAG_WINDOW_UNDECORATED);// | FLAG_WINDOW_ALWAYS_RUN);
 	InitWindow(1920, 1080, "");
 	SetWindowPosition(0, 0);
 	InitAudioDevice();
 	
 	SetExitKey(KEY_NULL);
 
-	//rlRAII::FontRAII font = LoadSDFFontEx("resource\\font\\LXGWNeoXiHei - FontInfo.dat", "resource\\font\\LXGWNeoXiHei - SDFTexture.png");
 		
 	AllStates state = AllStates::Menu;
 
@@ -593,9 +613,6 @@ int main()
 	Config config(state, showFPS, volume, WinWidth, WinHeight);
 	Main main(FONT_PATH, WinWidth, WinHeight, volume);
 
-	//rlRAII::FileRAII fd = FONT_PATH;
-	//rlRAII::FontRAII f = DynamicLoadFontFromMemory((std::string(u8"一段非常之长的，可用于测试自动换行的，包含符号的，没有任何现实意义与象征意义的，随便乱打的，废话连篇的测试文本") + std::string(u8"非常に長い一段で、自動改行のテストに使用できる、意味や象徴的な意味のない、無作為に打たれた、冗長なテストテキストです。")).c_str(), fd.fileName(), fd.get(), fd.size(), 50);
-	
 	while (!WindowShouldClose())
 	{
 		AllStates stateTmp = state;
@@ -675,3 +692,122 @@ int main()
 	return 0;
 }
 
+#include "ScriptLoader.h"
+
+int main()
+{
+	SetConfigFlags(FLAG_WINDOW_UNDECORATED);// | FLAG_WINDOW_ALWAYS_RUN);
+	InitWindow(1920, 1080, "");
+	SetWindowPosition(0, 0);
+	InitAudioDevice();
+
+	SetExitKey(KEY_NULL);
+
+	CFG.textSpeed = 1.0f;
+	CFG.fontData = rlRAII::FileRAII(FONT_PATH);
+	CFG.textBoxBackGround = rlRAII::Texture2DRAII("resource\\img\\TextBoxBackground.png");
+	CFG.textSize = 35;
+	CFG.readTextColor = { 170, 230, 255, 255 };
+	CFG.chrNameOffsetX = 0.2f;
+	CFG.mainLanguage = 0;
+	CFG.secondaryLanguage = 2;
+	CFG.ScreenWidth = GetScreenWidth();
+	CFG.ScreenHeight = GetScreenHeight();
+	CFG.readTextSet = std::unordered_set<std::string>();
+
+	AllStates state = AllStates::Menu;
+
+	bool showFPS = true;
+	float volume = 1.0f;
+
+	MenuWorld menu(state, WinWidth, WinHeight, volume);
+	Config config(state, showFPS, volume, WinWidth, WinHeight);
+
+	ecs::World2D main(CFG.ScreenWidth, CFG.ScreenHeight);
+
+	rlRAII::FileRAII sc("Script.txt");
+	vn::ScriptLoader scLoader(main, sc, CFG);
+	auto task = scLoader.load();
+	vn::ApplyScriptLoader(main, scLoader, CFG);
+	
+	task.get();
+	scLoader.loadScene(sc.begin());
+
+	while (!WindowShouldClose())
+	{
+		AllStates stateTmp = state;
+		switch (stateTmp)
+		{
+		case AllStates::Menu:
+			menu.update();
+			break;
+
+		case AllStates::Config:
+			config.init(menu.getSceenshot().get().texture);
+			config.update();
+			break;
+
+		case AllStates::Main:
+			main.update();
+			break;
+
+		default:
+			break;
+		}
+		if (showFPS)
+		{
+			DrawFPS(10, 40);
+		}
+
+		BeginDrawing();
+		ClearBackground(BLACK);
+
+		switch (stateTmp)
+		{
+		case AllStates::Menu:
+			menu.draw();
+			break;
+
+		case AllStates::Config:
+			config.draw();
+			break;
+
+		case AllStates::Main:
+			main.draw();
+			break;
+
+		default:
+			break;
+		}
+		if (showFPS)
+		{
+			DrawFPS(10, 40);
+		}
+
+		//DrawTextEx(f.get(), u8"一段非常之长的，可用于测试自动换行的，包含符号的，没有任何现实意义与象征意义的，随便乱打的，废话连篇的测试文本", { 20, 20 }, 50, 5, WHITE);
+		EndDrawing();
+
+
+		if (IsKeyPressed(KEY_ESCAPE))
+		{
+			switch (state)
+			{
+			case AllStates::Menu:
+				CloseWindow();
+				break;
+
+			case AllStates::Config:
+				state = AllStates::Menu;
+				break;
+
+			case AllStates::Main:
+				state = AllStates::Menu;
+				break;
+
+			default:
+				break;
+			}
+		}
+	}
+	return 0;
+}
