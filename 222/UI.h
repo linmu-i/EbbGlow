@@ -322,7 +322,7 @@ namespace ui
 		std::string fontPath;
 
 		std::string text;
-		int fontSize;
+		int textSize;
 
 	public:
 		rlRAII::Texture2DRAII baseIcon;
@@ -339,39 +339,35 @@ namespace ui
 
 		bool press;
 
+		float iconScale;
+
 		ButtonExCom
 		(
-			std::string fontPath,
+			rlRAII::FileRAII fontData,
 			rlRAII::Texture2DRAII baseIcon,
 			rlRAII::Texture2DRAII hoverIcon,
 			rlRAII::Texture2DRAII pressIcon,
 
 			std::string text,
 			Color textColor,
-			int fontSize,
+			int textSize,
 			int spacing,
 
 			Vector2 pos,
 			Vector2 coverage,
-			uint8_t layerDepth
-		) : fontPath(fontPath), baseIcon(baseIcon), hoverIcon(hoverIcon), pressIcon(pressIcon), text(text), textColor(textColor), fontSize(fontSize), spacing(spacing), pos(pos), coverage(coverage), layerDepth(layerDepth), press(false) 
+			uint8_t layerDepth,
+			float iconScale
+		) : fontPath(fontPath), baseIcon(baseIcon), hoverIcon(hoverIcon), pressIcon(pressIcon), text(text), textColor(textColor),
+			textSize(textSize), spacing(spacing), pos(pos), coverage(coverage), layerDepth(layerDepth), press(false), iconScale(iconScale)
 		{
-			font = rlRAII::FontRAII(DynamicLoadFont(text.c_str(), fontPath.c_str(), fontSize));
+			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), textSize * 2.0f));
 		}
 
-		void resetText(const char* newText)
+		void resetText(const char* newText, rlRAII::FileRAII newFont, float newSize)
 		{
 			text = newText;
-			font = rlRAII::FontRAII(DynamicLoadFont(newText, fontPath.c_str(), fontSize));
-		}
-		void resetFont(const char* newFontPath)
-		{
-			font = rlRAII::FontRAII(DynamicLoadFont(text.c_str(), newFontPath, fontSize));
-		}
-		void resetFontSize(float newFontSize)
-		{
-			fontSize = newFontSize;
-			font = rlRAII::FontRAII(DynamicLoadFont(text.c_str(), fontPath.c_str(), fontSize));
+			textSize = newSize;
+			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(newText, newFont.fileName(), newFont.get(), newFont.size(), newSize * 2.0f));
 		}
 	};
 
@@ -386,14 +382,16 @@ namespace ui
 		int spacing;
 		Vector2 pos;
 		Vector2 coverage;
+		float iconScale;
 
 	public:
 		ButtonExDraw(const ButtonExCom button, rlRAII::TextureRAII icon) :
-			font(button.font), icon(icon), text(button.text), textColor(button.textColor), fontSize(button.fontSize), spacing(button.spacing), pos(button.pos), coverage(button.coverage) { }
+			font(button.font), icon(icon), text(button.text), textColor(button.textColor), fontSize(button.textSize),
+			spacing(button.spacing), pos(button.pos), coverage(button.coverage), iconScale(button.iconScale) { }
 
 		void draw() override
 		{
-			DrawTexture(icon.get(), pos.x, pos.y, WHITE);
+			DrawTextureEx(icon.get(), pos, 0, iconScale, WHITE);
 			if (text.length() > 0)
 			{
 				Vector2 offset = TextCenteredOffset(font.get(), text, fontSize, spacing, coverage);

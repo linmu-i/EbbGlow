@@ -173,7 +173,7 @@ namespace visualnovel
 					if (!comActive.drawing)
 					{
 						comInactive.activePixel = comActive.totalPixel;
-						activePixelTmp = comActive.activePixel + 11;
+						activePixelTmp = comActive.totalPixel + 11;
 					}
 					if (comActive.activePixel < comActive.totalPixel)
 					{

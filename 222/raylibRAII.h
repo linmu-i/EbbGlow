@@ -988,7 +988,7 @@ namespace rlRAII
 			this->name = new(std::nothrow) char[strlen(name) + 1];
 			strcpy(this->name, name);
 		}
-
+		
 		FileRAII(const FileRAII& other) noexcept : fileData(other.fileData), ref(other.ref), dataSize(other.dataSize), name(other.name)
 		{
 			if (ref)
@@ -1259,4 +1259,152 @@ namespace rlRAII
 	};
 
 	typedef RenderTextureRAII RenderTexture2DRAII;
+
+	class SoundRAII
+	{
+	private:
+		Sound sound;
+		size_t* ref;
+
+	public:
+		SoundRAII() noexcept : sound({}), ref(nullptr) {}
+
+		SoundRAII(const SoundRAII& other) noexcept
+		{
+			if (other.ref)
+			{
+				sound = other.sound;
+				ref = other.ref;
+				++(*ref);
+			}
+			else
+			{
+				sound = {};
+				ref = nullptr;
+			}
+		}
+
+		SoundRAII(SoundRAII&& other) noexcept : sound(other.sound), ref(other.ref)
+		{
+			other.sound = {};
+			other.ref = nullptr;
+		}
+
+		SoundRAII(const char* soundPath) noexcept
+		{
+			sound = LoadSound(soundPath);
+			if (IsSoundValid(sound))
+			{
+				ref = new(std::nothrow) size_t(1);
+				if (ref == nullptr)
+				{
+					UnloadSound(sound);
+					sound = {};
+				}
+			}
+			else
+			{
+				ref = nullptr;
+			}
+		}
+
+		SoundRAII(const Sound otherSound) noexcept
+		{
+			if (IsSoundValid(otherSound))
+			{
+				sound = otherSound;
+				ref = new(std::nothrow) size_t(1);
+				if (ref == nullptr)
+				{
+					UnloadSound(sound);
+					sound = {};
+				}
+			}
+			else
+			{
+				sound = {};
+				ref = nullptr;
+			}
+		}
+
+		SoundRAII& operator=(const SoundRAII& other) noexcept
+		{
+			if (other.ref == ref)
+			{
+				return *this;
+			}
+			if (ref)
+			{
+				--(*ref);
+				if (*ref == 0)
+				{
+					delete ref;
+					UnloadSound(sound);
+				}
+			}
+			if (other.ref != nullptr)
+			{
+				sound = other.sound;
+				ref = other.ref;
+				++(*ref);
+			}
+			else
+			{
+				sound = {};
+				ref = nullptr;
+			}
+		}
+
+		SoundRAII& operator=(SoundRAII&& other) noexcept
+		{
+			if (&other == this)
+			{
+				return *this;
+			}
+			if (ref)
+			{
+				--(*ref);
+				if (*ref == 0)
+				{
+					delete ref;
+					UnloadSound(sound);
+				}
+			}
+			sound = other.sound;
+			ref = other.ref;
+			other.sound = {};
+			other.ref = nullptr;
+			return *this;
+		}
+
+		~SoundRAII()
+		{
+			if (ref)
+			{
+				--(*ref);
+				if (*ref == 0)
+				{
+					delete ref;
+					UnloadSound(sound);
+				}
+				ref = nullptr;
+				sound = {};
+			}
+		}
+
+		Sound& get() noexcept
+		{
+			return sound;
+		}
+
+		operator bool() const noexcept
+		{
+			return ref;
+		}
+
+		bool valid() const noexcept
+		{
+			return ref;
+		}
+	};
 }

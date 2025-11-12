@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <rlgl.h>
 
-const char* FONT_PATH = R"(resource\font\SourceHanSansCN\SourceHanSansCN-Bold.otf)";
+const char* FONT_PATH = R"(C:\Windows\Fonts\Dengb.ttf)";//R"(resource\font\SourceHanSansCN\SourceHanSansCN-Bold.otf)";
 //const char* FONT_PATH = R"(D:\Downloads\LXGWNeoXiHei.ttf)";
 
 rlRAII::FileRAII FontData(FONT_PATH);
@@ -89,13 +89,13 @@ public:
 		buttonExId = this->getEntityManager()->getId();
 		animationId = this->getEntityManager()->getId();
 
-		rlRAII::Texture2DRAII baseIcon = LoadTexture("resource\\img\\按钮基本.png");
+		rlRAII::Texture2DRAII baseIcon = LoadTexture(u8"resource\\img\\按钮基本.png");
 		rlRAII::Texture2DRAII hoverIcon = LoadTexture("resource\\img\\按钮悬浮.png");
 		rlRAII::Texture2DRAII pressIcon = LoadTexture("resource\\img\\按钮按下.png");
 
 		this->createUnit(buttonStart, ui::ButtonCom({ 200,650 }, 300, 80, 50, WHITE, BLUE, "Start", nullptr));
 		this->createUnit(buttonConfig, ui::ButtonCom({ 200,750 }, 300, 80, 50, WHITE, BLUE, "Config", nullptr));
-		this->createUnit(buttonExId, ui::ButtonExCom(FONT_PATH, baseIcon, hoverIcon, pressIcon, "", WHITE, 50, 3, { 200,850 }, { 150,50 }, 8));
+		this->createUnit(buttonExId, ui::ButtonExCom(FontData, baseIcon, hoverIcon, pressIcon, "", WHITE, 50, 3, { 200,850 }, { 150,50 }, 8, 1.0f));
 		this->createUnit(background, ui::ImageBoxCom{ {0,0}, rlRAII::Texture2DRAII("resource\\img\\backGround.png") });
 		this->createUnit(animationId, ui::AnimationCom(
 			{ "resource\\animation\\z1.png", "resource\\animation\\z2.png", "resource\\animation\\z3.png", "resource\\animation\\z4.png", "resource\\animation\\z5.png" },
@@ -388,7 +388,7 @@ public:
 			b1Id = world->getEntityManager()->getId();
 			world->createUnit(b0Id, ui::ButtonExCom
 			(
-				FONT_PATH,
+				FontData,//FONT_PATH,
 				"resource\\img\\按钮0.png",
 				"resource\\img\\按钮1.png",
 				"resource\\img\\按钮2.png",
@@ -398,11 +398,12 @@ public:
 				5,
 				{ 810,320 },
 				{ 300,80 },
-				8
+				8,
+				1.0f
 			));
 			world->createUnit(b1Id, ui::ButtonExCom
 			(
-				FONT_PATH,
+				FontData,
 				"resource\\img\\按钮0.png",
 				"resource\\img\\按钮1.png",
 				"resource\\img\\按钮2.png",
@@ -412,7 +413,8 @@ public:
 				5,
 				{ 810,680 },
 				{ 300,80 },
-				8
+				8,
+				1.0f
 			));
 			//world->createUnit(b1Id, ui::ButtonExCom({ 810, 680 }, 300, 80, 50, WHITE, BLUE, u8"做泡芙", font));
 			world->getSystem<ui::ButtonSystem>()->registerListener(b0Id, b0Id);
@@ -697,7 +699,7 @@ int main0()
 int main()
 {
 	SetConfigFlags(FLAG_WINDOW_UNDECORATED);// | FLAG_WINDOW_ALWAYS_RUN);
-	InitWindow(1920, 1080, "");
+	InitWindow(GetScreenWidth(), GetScreenHeight(), "");
 	SetWindowPosition(0, 0);
 	InitAudioDevice();
 
@@ -706,9 +708,10 @@ int main()
 	CFG.textSpeed = 1.0f;
 	CFG.fontData = rlRAII::FileRAII(FONT_PATH);
 	CFG.textBoxBackGround = rlRAII::Texture2DRAII("resource\\img\\TextBoxBackground.png");
+	CFG.chrNameBackGround = rlRAII::Texture2DRAII("resource\\img\\ChrBoxBackground.png");
 	CFG.textSize = 35;
 	CFG.readTextColor = { 170, 230, 255, 255 };
-	CFG.chrNameOffsetX = 0.2f;
+	CFG.chrNameOffsetX = 0.5f;
 	CFG.mainLanguage = 0;
 	CFG.secondaryLanguage = 2;
 	CFG.ScreenWidth = GetScreenWidth();

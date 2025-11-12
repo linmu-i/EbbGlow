@@ -10,6 +10,26 @@
 
 namespace visualnovel
 {
+	class MusicManager : public ecs::SystemBase
+	{
+	private:
+		VisualNovelConfig cfg;
+
+		rlRAII::MusicRAII bgm;
+		rlRAII::SoundRAII voice;
+
+	public:
+		void update() override
+		{
+			if (bgm.valid())
+			{
+				UpdateMusicStream(bgm.get());
+			}
+			
+			
+		}
+	};
+
 	class ScriptLoader
 	{
 	public:
@@ -41,7 +61,7 @@ namespace visualnovel
 				cfg.textSize, cfg.fontData, cfg.textSpeed, Vector2({ cfg.ScreenWidth * 0.1666667f, cfg.ScreenHeight * 0.75f}), cfg.ScreenWidth * 0.6666667f,
 				cfg.showReadText && read ? cfg.readTextColor : WHITE
 			));
-
+			
 			float bgScale = std::min(static_cast<float>(cfg.ScreenWidth) / static_cast<float>(backGround.get().width), static_cast<float>(cfg.ScreenHeight) / static_cast<float>(backGround.get().height));
 			Vector2 bgPosition;
 			if (static_cast<float>(cfg.ScreenWidth) / static_cast<float>(backGround.get().width) > static_cast<float>(cfg.ScreenHeight) / static_cast<float>(backGround.get().height))
@@ -92,7 +112,7 @@ namespace visualnovel
 		void ReadNextNumber(std::string& textBuf, rlRAII::FileRAII::Iterator& nextScene)
 		{
 			textBuf.clear();
-			while ((!isdigit(*nextScene) && *nextScene != '.' && *nextScene != '+' && *nextScene != '-') && !nextScene.eof()) ++nextScene;
+			while (!isdigit(*nextScene) && *nextScene != '.' && *nextScene != '+' && *nextScene != '-' && !nextScene.eof()) ++nextScene;
 			while ((isdigit(*nextScene) || *nextScene == '.' || *nextScene == '+' || *nextScene == '-') && !nextScene.eof())
 			{
 				textBuf += *nextScene;
@@ -153,6 +173,8 @@ namespace visualnovel
 		std::string nextSceneName;
 		bool clicked = false;
 
+		ecs::MessageTypeId pressMsgId = world->getMessageManager()->getMessageTypeManager().getId<ui::ButtonPressMsg>();
+
 	public:
 		TextSceneSystem(ecs::World2D& world, VisualNovelConfig& cfg, ScriptLoader& scLoader) :
 			world(&world), cfg(&cfg), coms(world.getDoubleBuffer<TextSceneCom>()), buttonComs(world.getDoubleBuffer<ui::ButtonExCom>()),
@@ -160,13 +182,12 @@ namespace visualnovel
 
 		void update() override
 		{
-			ecs::MessageTypeId pressMsgId = world->getMessageManager()->getMessageTypeManager().getId<ui::ButtonPressMsg>();
 			bool processed = false;
-			coms->active()->forEach([this, pressMsgId, &processed](ecs::entity id, TextSceneCom& comActive)
+			coms->active()->forEach([this, &processed](ecs::entity id, TextSceneCom& comActive)
 			{
 				if (clicked)
 				{
-					buttonComs->active()->forEach([this, &processed, pressMsgId](ecs::entity id, ui::ButtonExCom& comActive)
+					buttonComs->active()->forEach([this, &processed](ecs::entity id, ui::ButtonExCom& comActive)
 					{
 						if (!processed)
 						{
@@ -199,6 +220,46 @@ namespace visualnovel
 					if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
 					{
 						clicked = true;
+					}
+				}
+			});
+		}
+	};
+
+	struct SelectSceneCom
+	{
+		std::vector<ecs::entity> buttonIdList;
+		std::vector<rlRAII::FileRAII::Iterator> nextSceneList;
+	};
+
+	class SelectSceneSystem : public ecs::SystemBase
+	{
+	private:
+		ecs::World2D* world;
+		ecs::DoubleComs<SelectSceneCom>* coms;
+		ScriptLoader* scLoader;
+		VisualNovelConfig* cfg;
+
+		ecs::MessageTypeId pressMsgId = world->getMessageManager()->getMessageTypeManager().getId<ui::ButtonPressMsg>();
+
+	public:
+		SelectSceneSystem(ecs::World2D& world, VisualNovelConfig& cfg, ScriptLoader& scLoader) :
+			world(&world), cfg(&cfg), coms(world.getDoubleBuffer<SelectSceneCom>()), scLoader(&scLoader) {}
+
+		void update() override
+		{
+			coms->active()->forEach([this](ecs::entity id, SelectSceneCom& comActive)
+			{
+				for (size_t i = 0; i < comActive.buttonIdList.size(); ++i)
+				{
+					auto msgs = world->getMessageManager()->getMessageList(comActive.buttonIdList[i]);
+					for (auto& msg : *msgs)
+					{
+						if (msg->getType() == pressMsgId)
+						{
+							scLoader->loadScene(comActive.nextSceneList[i]);
+							return;
+						}
 					}
 				}
 			});
@@ -291,6 +352,7 @@ namespace visualnovel
 			}
 			else if (!memcmp(nextScene.get(), "Chr", 3) && (nextScene[3] == '(' || isspace(nextScene[3])))
 			{
+				nextScene += 4;
 				std::string nameBuf;
 				ReadNextString(nameBuf, nextScene);
 
@@ -311,6 +373,91 @@ namespace visualnovel
 				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
 				++nextScene;
 			}
+			else if (!memcmp(nextScene.get(), "Button", 6) && (nextScene[6] == '(' || isspace(nextScene[6])))
+			{
+				nextScene += 7;
+				float relativeX, relativeY, ratio, width;
+				std::vector<std::string> languages;
+				std::string buf;
+				std::string alignment;
+				Color textColor;
+				rlRAII::Texture2DRAII normalImg;
+				rlRAII::Texture2DRAII hoverImg;
+				rlRAII::Texture2DRAII pressImg;
+				ReadNextNumber(buf, nextScene);
+				relativeX = std::stof(buf);
+				ReadNextNumber(buf, nextScene);
+				relativeY = std::stof(buf);
+				ReadNextNumber(buf, nextScene);
+				ratio = std::stof(buf);
+				ReadNextNumber(buf, nextScene);
+				width = std::stof(buf);
+
+				ReadNextString(buf, nextScene);
+				languages.push_back(buf);
+				ReadNextString(buf, nextScene);
+				languages.push_back(buf);
+				ReadNextString(buf, nextScene);
+				languages.push_back(buf);
+				ReadNextString(buf, nextScene);
+				languages.push_back(buf);
+
+				ReadNextString(alignment, nextScene);
+
+				ReadNextNumber(buf, nextScene);
+				textColor.r = std::stoi(buf);
+				ReadNextNumber(buf, nextScene);
+				textColor.g = std::stoi(buf);
+				ReadNextNumber(buf, nextScene);
+				textColor.b = std::stoi(buf);
+				ReadNextNumber(buf, nextScene);
+				textColor.a = std::stoi(buf);
+
+				ReadNextString(buf, nextScene);
+				normalImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
+				ReadNextString(buf, nextScene);
+				hoverImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
+				ReadNextString(buf, nextScene);
+				pressImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
+
+				float offsetX = cfg.ScreenWidth * relativeX, offsetY = cfg.ScreenHeight * relativeY;
+				float height = width / ratio;
+				if (alignment == "Center")
+				{
+					offsetX -= (width * cfg.ScreenWidth) / 2.0f;
+					offsetY -= (height * cfg.ScreenHeight) / 2.0f;
+				}
+				
+				
+				if (sceneType == "SelectScene")
+				{
+					exIdList.push_back(world.getEntityManager()->getId());
+					SetTextureFilter(normalImg.get(), RL_TEXTURE_FILTER_BILINEAR);
+					SetTextureFilter(hoverImg.get(), RL_TEXTURE_FILTER_BILINEAR);
+					SetTextureFilter(pressImg.get(), RL_TEXTURE_FILTER_BILINEAR);
+					world.createUnit(exIdList.back(), ui::ButtonExCom
+					{
+						cfg.fontData,
+						normalImg,
+						hoverImg,
+						pressImg,
+						languages[cfg.uiLanguage],
+						textColor,
+						cfg.textSize,
+						int(cfg.textSize * 0.1),
+						Vector2{ offsetX, offsetY },
+						Vector2{ width * cfg.ScreenWidth, height * cfg.ScreenWidth },
+						cfg.ButtonLayer,
+						(width * cfg.ScreenWidth) / normalImg.get().width
+					});
+					world.getMessageManager()->subscribe(exIdList.back());
+				}
+			}
+			else if (!memcmp(nextScene.get(), "//", 2))
+			{
+				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+			}
 			else
 			{
 				++nextScene;
@@ -322,7 +469,17 @@ namespace visualnovel
 			idList.push_back(world.getEntityManager()->getId());
 			auto it = viewer.find(targetList.back());
 			world.createUnit(idList.back(), visualnovel::TextSceneCom{ exIdList.back(), viewer[targetList.back()]});
-
+		}
+		else if (sceneType == "SelectScene")
+		{
+			idList.push_back(world.getEntityManager()->getId());
+			std::vector<rlRAII::FileRAII::Iterator> targetItList;
+			for (auto target : targetList)
+			{
+				auto it = viewer.find(target);
+				targetItList.push_back(it->second);
+			}
+			world.createUnit(idList.back(), visualnovel::SelectSceneCom{ exIdList, targetItList });
 		}
 	}
 
@@ -335,5 +492,7 @@ namespace visualnovel
 		world.addSystem(vn::StandardTextBoxSystem(world.getDoubleBuffer<StandardTextBox>(), world.getUiLayer(), cfg.textBoxLayer, cfg));
 		world.addPool<visualnovel::TextSceneCom>();
 		world.addSystem(TextSceneSystem(world, cfg, scriptLoader));
+		world.addPool<visualnovel::SelectSceneCom>();
+		world.addSystem(SelectSceneSystem(world, cfg, scriptLoader));
 	}
 }
