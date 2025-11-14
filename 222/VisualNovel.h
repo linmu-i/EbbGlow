@@ -34,11 +34,12 @@ namespace visualnovel
 		constexpr static int textBoxBackGroundLayer = 3;
 		constexpr static int ButtonLayer = 6;
 
-		bool showReadText;
-		Color readTextColor;
+		bool showReadText = false;
+		Color readTextColor = WHITE;
 		std::unordered_set<std::string> readTextSet;
 
-		
+		float drawRatio = 0.0f;
+		Vector2 drawOffset = { 0,0 };
 
 	};
 

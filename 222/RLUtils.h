@@ -262,6 +262,96 @@ std::vector<int> GetUnicodePoints(const char* text) {
 	return codePoints;
 }
 
+#include <unordered_set>
+
+std::vector<int> GetUnicodePointsUnique(const char* text) {
+	std::vector<int> codePoints;
+	std::unordered_set<int> seen;  //新增：记录已见码点
+
+	while (*text != '\0') {
+		uint8_t lead = static_cast<uint8_t>(*text);
+
+		// 单字节字符 (ASCII)
+		if (lead < 0x80) {
+			int cp = lead;
+			//去重判断
+			if (seen.find(cp) == seen.end()) {
+				seen.insert(cp);
+				codePoints.push_back(cp);
+			}
+			text++;
+			continue;
+		}
+
+		// 多字节字符处理
+		int numBytes = 0;
+		int codePoint = 0;
+
+		if ((lead & 0xE0) == 0xC0) {  // 2字节
+			numBytes = 2;
+			codePoint = lead & 0x1F;
+		}
+		else if ((lead & 0xF0) == 0xE0) {  // 3字节
+			numBytes = 3;
+			codePoint = lead & 0x0F;
+		}
+		else if ((lead & 0xF8) == 0xF0) {  // 4字节
+			numBytes = 4;
+			codePoint = lead & 0x07;
+		}
+		else {
+			// 无效首字节：使用替换字符并跳过
+			int cp = 0xFFFD;
+			if (seen.find(cp) == seen.end()) {
+				seen.insert(cp);
+				codePoints.push_back(cp);
+			}
+			text++;
+			continue;
+		}
+
+		// 检查后续字节有效性
+		bool valid = true;
+		for (int i = 1; i < numBytes; ++i) {
+			text++;
+			if (*text == '\0' || (static_cast<uint8_t>(*text) < 0x80 || (static_cast<uint8_t>(*text) > 0xBF))) {
+				valid = false;
+				break;
+			}
+			codePoint = (codePoint << 6) | (static_cast<uint8_t>(*text) & 0x3F);
+		}
+
+		if (!valid) {
+			text -= (numBytes - 1) - 1;
+			int cp = 0xFFFD;
+			if (seen.find(cp) == seen.end()) {
+				seen.insert(cp);
+				codePoints.push_back(cp);
+			}
+			text++;
+			continue;
+		}
+
+		// 验证码点范围
+		bool rangeValid = true;
+		if (numBytes == 2 && codePoint < 0x80) rangeValid = false;
+		else if (numBytes == 3 && codePoint < 0x800) rangeValid = false;
+		else if (numBytes == 4 && (codePoint < 0x10000 || codePoint > 0x10FFFF)) rangeValid = false;
+
+		int cp = rangeValid ? codePoint : 0xFFFD;
+
+		//关键：仅当首次出现时加入
+		if (seen.find(cp) == seen.end()) {
+			seen.insert(cp);
+			codePoints.push_back(cp);
+		}
+
+		text++;  // 移动到下一个字符
+	}
+
+	return codePoints;
+}
+
 Font DynamicLoadFont(const char* text, const char* fontPath, float fontSize)
 {
 	int codepointCount = 0;
@@ -275,9 +365,10 @@ Font DynamicLoadFont(const char* text, const char* fontPath, float fontSize)
 
 Font DynamicLoadFontFromMemory(const char* text, const char* fileName, const unsigned char* fontData, int dataSize, float fontSize)
 {
-	int codepointCount = 0;
-	//std::vector<int> codepoints = GetUnicodePoints(text);
-	int* codepoints = LoadCodepoints(text, &codepointCount);
+	//int codepointCount = 0;
+	std::vector<int> codepoints = GetUnicodePoints(text);
+	codepoints.insert(codepoints.end(), codepoints.begin(), codepoints.end());
+	//int* codepoints = LoadCodepoints(text, &codepointCount);
 	const char* p = fileName;
 	while (*p != '\0') 
 	{
@@ -287,9 +378,10 @@ Font DynamicLoadFontFromMemory(const char* text, const char* fileName, const uns
 	{
 		--p;
 	} while (*p != '.' && p != fileName);
-	Font font;
-	font = LoadFontFromMemory(p, fontData, dataSize, 50/*fontSize*/, codepoints, codepointCount);
-	UnloadCodepoints(codepoints);
+	//Font font = {};
+	//font = LoadFontFromMemory(p, fontData, dataSize, fontSize, codepoints, codepointCount);
+	Font font = LoadFontFromMemory(p, fontData, dataSize, fontSize, codepoints.data(), codepoints.size());
+	//UnloadCodepoints(codepoints);
 	SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
 	return font;
 }

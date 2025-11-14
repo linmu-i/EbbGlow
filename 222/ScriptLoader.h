@@ -52,43 +52,68 @@ namespace visualnovel
 		std::vector<std::string> targetScene;
 		std::vector<ecs::entity> idList;
 		std::vector<ecs::entity> exIdList;
-		void CreateTextScene(const std::vector<std::string>& languages, ecs::entity textBoxId, rlRAII::Texture2DRAII backGround, bool read)
+		enum class BackgroundDrawType : uint8_t
+		{
+			Contain,
+			Cover
+		};
+		void CreateTextScene(const std::vector<std::string>& languages, ecs::entity textBoxId, rlRAII::Texture2DRAII backGround, bool read, BackgroundDrawType drawType)
 		{
 			world.createUnit(textBoxId, vn::StandardTextBox
 			(
 				languages[cfg.mainLanguage],
 				languages[cfg.secondaryLanguage],
-				cfg.textSize, cfg.fontData, cfg.textSpeed, Vector2({ cfg.ScreenWidth * 0.1666667f, cfg.ScreenHeight * 0.75f}), cfg.ScreenWidth * 0.6666667f,
+				cfg.textSize, cfg.fontData, cfg.textSpeed, Vector2({ cfg.ScreenWidth * 0.1666667f, cfg.ScreenHeight * 0.75f}) + cfg.drawOffset, cfg.ScreenWidth * 0.6666667f,
 				cfg.showReadText && read ? cfg.readTextColor : WHITE
 			));
 			
-			float bgScale = std::min(static_cast<float>(cfg.ScreenWidth) / static_cast<float>(backGround.get().width), static_cast<float>(cfg.ScreenHeight) / static_cast<float>(backGround.get().height));
+			float scaleX = static_cast<float>(cfg.ScreenWidth) / static_cast<float>(backGround.get().width);
+			float scaleY = static_cast<float>(cfg.ScreenHeight) / static_cast<float>(backGround.get().height);
+
+			float bgScale;
 			Vector2 bgPosition;
-			if (static_cast<float>(cfg.ScreenWidth) / static_cast<float>(backGround.get().width) > static_cast<float>(cfg.ScreenHeight) / static_cast<float>(backGround.get().height))
+			switch (drawType)
 			{
-				bgPosition = { (cfg.ScreenWidth - backGround.get().width * bgScale) / 2.0f, 0.0f };
+			default:
+			case BackgroundDrawType::Contain:
+				bgScale = std::min(scaleX, scaleY);
+				if (scaleX > scaleY)
+				{
+					bgPosition = { (cfg.ScreenWidth - backGround.get().width * bgScale) / 2.0f, 0.0f };
+				}
+				else
+				{
+					bgPosition = { 0.0f, (cfg.ScreenHeight - backGround.get().height * bgScale) / 2.0f };
+				}
+				break;
+
+			case BackgroundDrawType::Cover:
+				bgScale = std::max(scaleX, scaleY);
+				if (scaleX < scaleY)
+				{
+					bgPosition = { (cfg.ScreenWidth - backGround.get().width * bgScale) / 2.0f, 0.0f };
+				}
+				else
+				{
+					bgPosition = { 0.0f, (cfg.ScreenHeight - backGround.get().height * bgScale) / 2.0f };
+				}
 			}
-			else
-			{
-				bgPosition = { 0.0f, (cfg.ScreenHeight - backGround.get().height * bgScale) / 2.0f };
-			}
+
+			
 			auto idMgr = world.getEntityManager();
 			if (backGround.valid())
 			{
 				idList.push_back(idMgr->getId());
-				world.createUnit(idList.back(), ui::ImageBoxExCom({ bgPosition, bgScale, backGround, cfg.backGroundLayer }));
+				world.createUnit(idList.back(), ui::ImageBoxExCom({ bgPosition + cfg.drawOffset, bgScale, backGround, cfg.backGroundLayer }));
 			}
 			if (cfg.textBoxBackGround.valid())
 			{
 				float scale = std::max(float(cfg.ScreenWidth) / cfg.textBoxBackGround.get().width, float(cfg.ScreenHeight * (0.25f + 0.03125f)) / cfg.textBoxBackGround.get().height);
 				idList.push_back(idMgr->getId());
-				world.createUnit(idList.back(), ui::ImageBoxExCom({ Vector2({ (cfg.ScreenWidth - cfg.textBoxBackGround.get().width * scale) / 2, cfg.ScreenHeight * (0.75f - 0.03125f)}), scale, cfg.textBoxBackGround, cfg.textBoxBackGroundLayer}));
+				world.createUnit(idList.back(), ui::ImageBoxExCom({ Vector2{ (cfg.ScreenWidth - cfg.textBoxBackGround.get().width * scale) / 2, cfg.ScreenHeight * (0.75f - 0.03125f)} + cfg.drawOffset, scale, cfg.textBoxBackGround, cfg.textBoxBackGroundLayer}));
 			}
 		}
-		void CreateNameBox(const std::vector<std::string>& languages, const visualnovel::VisualNovelConfig& cfg, ecs::entity nameBoxId)
-		{
 
-		}
 		void ReadNextString(std::string& textBuf, rlRAII::FileRAII::Iterator& nextScene)
 		{
 			textBuf.clear();
@@ -173,12 +198,13 @@ namespace visualnovel
 		std::string nextSceneName;
 		bool clicked = false;
 
-		ecs::MessageTypeId pressMsgId = world->getMessageManager()->getMessageTypeManager().getId<ui::ButtonPressMsg>();
+		ecs::MessageTypeId pressMsgId;
 
 	public:
 		TextSceneSystem(ecs::World2D& world, VisualNovelConfig& cfg, ScriptLoader& scLoader) :
 			world(&world), cfg(&cfg), coms(world.getDoubleBuffer<TextSceneCom>()), buttonComs(world.getDoubleBuffer<ui::ButtonExCom>()),
-			clicked(false), textBoxComs(world.getDoubleBuffer<StandardTextBox>()), scLoader(&scLoader) {}
+			clicked(false), textBoxComs(world.getDoubleBuffer<StandardTextBox>()), scLoader(&scLoader),
+			pressMsgId(world.getMessageManager()->getMessageTypeManager().getId<ui::ButtonPressMsg>()){}
 
 		void update() override
 		{
@@ -217,7 +243,7 @@ namespace visualnovel
 				}
 				else
 				{
-					if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+					if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL) || IsKeyPressed(KEY_SPACE) || GetMouseWheelMove() < 0.0f)
 					{
 						clicked = true;
 					}
@@ -240,7 +266,7 @@ namespace visualnovel
 		ScriptLoader* scLoader;
 		VisualNovelConfig* cfg;
 
-		ecs::MessageTypeId pressMsgId = world->getMessageManager()->getMessageTypeManager().getId<ui::ButtonPressMsg>();
+		ecs::MessageTypeId pressMsgId = world->getMessageManager()->getMessageTypeManager().getId<ui::ButtonReleaseMsg>();
 
 	public:
 		SelectSceneSystem(ecs::World2D& world, VisualNovelConfig& cfg, ScriptLoader& scLoader) :
@@ -321,6 +347,7 @@ namespace visualnovel
 			{
 				std::string textBuf;
 				std::vector<std::string> texts;
+				std::string bg;
 				nextScene += 10;
 				auto LoadText = [&textBuf, &nextScene, this]()
 					{
@@ -335,17 +362,28 @@ namespace visualnovel
 				LoadText();
 				texts.push_back(textBuf);
 				LoadText();
+				bg = textBuf;
+				LoadText();
 				auto readIt = cfg.readTextSet.find(sceneName);
+				BackgroundDrawType bgType;
+				if (textBuf == "Cover")
+				{
+					bgType = BackgroundDrawType::Cover;
+				}
+				else
+				{
+					bgType = BackgroundDrawType::Contain;
+				}
 				if (sceneType == "TextScene")
 				{
 					exIdList.push_back(world.getEntityManager()->getId());
-					CreateTextScene(texts, exIdList.back(), rlRAII::Texture2DRAII(textBuf.c_str()), readIt == cfg.readTextSet.end());
+					CreateTextScene(texts, exIdList.back(), rlRAII::Texture2DRAII(bg.c_str()), readIt == cfg.readTextSet.end(), bgType);
 				}
 				else
 				{
 					auto idmgr = world.getEntityManager();
 					idList.push_back(idmgr->getId());
-					CreateTextScene(texts, idList.back(), rlRAII::Texture2DRAII(textBuf.c_str()), readIt == cfg.readTextSet.end());
+					CreateTextScene(texts, idList.back(), rlRAII::Texture2DRAII(bg.c_str()), readIt == cfg.readTextSet.end(), bgType);
 				}
 				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
 				++nextScene;
@@ -365,11 +403,11 @@ namespace visualnovel
 				{
 					idList.push_back(world.getEntityManager()->getId());
 					float scale = static_cast<float>(offsetY) / static_cast<float>(cfg.chrNameBackGround.get().height);
-					world.createUnit(idList.back(), ui::ImageBoxExCom({ Vector2({ static_cast<float>(x), static_cast<float>(y) }), scale, cfg.chrNameBackGround, cfg.textBoxLayer }));
+					world.createUnit(idList.back(), ui::ImageBoxExCom({ Vector2{ static_cast<float>(x), static_cast<float>(y) } + cfg.drawOffset, scale, cfg.chrNameBackGround, cfg.textBoxLayer }));
 				}
 
 				idList.push_back(world.getEntityManager()->getId());
-				world.createUnit(idList.back(), ui::TextBoxExCom{ cfg.fontData, nameBuf, {float(x + textOffsetX), float(y)}, WHITE, cfg.textBoxLayer, float(cfg.textSize), 0.1f * cfg.textSize });
+				world.createUnit(idList.back(), ui::TextBoxExCom{ cfg.fontData, nameBuf, Vector2{float(x + textOffsetX), float(y)} + cfg.drawOffset, WHITE, cfg.textBoxLayer, float(cfg.textSize), 0.1f * cfg.textSize });
 				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
 				++nextScene;
 			}
@@ -445,13 +483,82 @@ namespace visualnovel
 						textColor,
 						cfg.textSize,
 						int(cfg.textSize * 0.1),
-						Vector2{ offsetX, offsetY },
+						Vector2{ offsetX, offsetY } + cfg.drawOffset,
 						Vector2{ width * cfg.ScreenWidth, height * cfg.ScreenWidth },
 						cfg.ButtonLayer,
 						(width * cfg.ScreenWidth) / normalImg.get().width
 					});
 					world.getMessageManager()->subscribe(exIdList.back());
 				}
+				else
+				{
+					idList.push_back(world.getEntityManager()->getId());
+					SetTextureFilter(normalImg.get(), RL_TEXTURE_FILTER_BILINEAR);
+					SetTextureFilter(hoverImg.get(), RL_TEXTURE_FILTER_BILINEAR);
+					SetTextureFilter(pressImg.get(), RL_TEXTURE_FILTER_BILINEAR);
+					world.createUnit(idList.back(), ui::ButtonExCom
+						{
+							cfg.fontData,
+							normalImg,
+							hoverImg,
+							pressImg,
+							languages[cfg.uiLanguage],
+							textColor,
+							cfg.textSize,
+							int(cfg.textSize * 0.1),
+							Vector2{ offsetX, offsetY } + cfg.drawOffset,
+							Vector2{ width * cfg.ScreenWidth, height * cfg.ScreenWidth },
+							cfg.ButtonLayer,
+							(width * cfg.ScreenWidth) / normalImg.get().width
+						});
+					world.getMessageManager()->subscribe(idList.back());
+				}
+
+				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+			}
+			else if (!memcmp(nextScene.get(), "Image", 5) && (nextScene[5] == '(' || isspace(nextScene[5])))
+			{
+				nextScene += 6;
+				float relativeX, relativeY, ratio, width, scale, x, y;
+				rlRAII::Texture2DRAII img;
+				std::string buf;
+				ReadNextNumber(buf, nextScene);
+				relativeX = std::stof(buf);
+				ReadNextNumber(buf, nextScene);
+				relativeY = std::stof(buf);
+				ReadNextNumber(buf, nextScene);
+				ratio = std::stof(buf);
+				ReadNextNumber(buf, nextScene);
+				width = std::stof(buf);
+				ReadNextString(buf, nextScene);
+				img = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
+				ReadNextString(buf, nextScene);
+				if (buf == "Cover")
+				{
+					scale = std::max(width * cfg.ScreenWidth / img.get().width, width / ratio * cfg.ScreenWidth / img.get().height);//std::max((width * cfg.ScreenWidth) / img.get().width, (width * cfg.ScreenWidth / ratio) / img.get().height);
+				}
+				else
+				{
+					scale = std::min(width * cfg.ScreenWidth / img.get().width, width / ratio * cfg.ScreenWidth / img.get().height);//std::min((width * cfg.ScreenWidth) / img.get().width, (width * cfg.ScreenWidth / ratio) / img.get().height);
+				}
+				ReadNextString(buf, nextScene);
+				if (buf == "Center")
+				{
+					x = (relativeX * cfg.ScreenWidth - img.get().width * scale / 2);
+					y = (relativeY * cfg.ScreenHeight - img.get().height * scale / 2);
+				}
+				else
+				{
+					x = relativeX * cfg.ScreenWidth;
+					y = relativeY * cfg.ScreenHeight;
+				}
+				ReadNextNumber(buf, nextScene);
+				idList.push_back(world.getEntityManager()->getId());
+				world.createUnit(idList.back(), ui::ImageBoxExCom{ Vector2{x, y} + cfg.drawOffset, scale, img, std::stoi(buf) });
+
+				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
+				++nextScene;
 			}
 			else if (!memcmp(nextScene.get(), "//", 2))
 			{

@@ -752,7 +752,7 @@ namespace rlRAII
 			Iterator(FileRAII file, int64_t offset) : fileSize(file.dataSize), pointer(file.fileData + offset), offset(offset) {}
 
 			Iterator(const Iterator& other) : fileSize(other.fileSize), offset(other.offset), pointer(other.pointer) {}
-			Iterator(Iterator&& other) : fileSize(other.fileSize), offset(other.offset), pointer(other.pointer)
+			Iterator(Iterator&& other) noexcept : fileSize(other.fileSize), offset(other.offset), pointer(other.pointer)
 			{
 				other.fileSize = 0;
 				other.offset = 0;

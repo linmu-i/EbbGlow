@@ -9,16 +9,18 @@
 #include <stdlib.h>
 #include <rlgl.h>
 
-const char* FONT_PATH = R"(C:\Windows\Fonts\Dengb.ttf)";//R"(resource\font\SourceHanSansCN\SourceHanSansCN-Bold.otf)";
-//const char* FONT_PATH = R"(D:\Downloads\LXGWNeoXiHei.ttf)";
+//onst char* FONT_PATH = R"(C:\Windows\Fonts\Dengb.ttf)";
+const char* FONT_PATH = R"(resource\font\Noto_Sans_SC\static\NotoSansSC-SemiBold.ttf)";
+//const char* FONT_PATH = R"(C:\Windows\Fonts\msyh.ttf)";
 
 rlRAII::FileRAII FontData(FONT_PATH);
 
 constexpr int WinWidth = 1920;
 constexpr int WinHeight = 1080;
 
-visualnovel::VisualNovelConfig CFG;//{ 0, 1, 0, 1.0f, 40, "", 1920, 1080};
+visualnovel::VisualNovelConfig CFG;
 
+/*
 enum class AllStates : uint8_t
 {
 	Menu,
@@ -174,7 +176,6 @@ private:
 		}
 	};
 
-	/*
 	class Dr : public ecs::DrawBase
 	{
 	public:
@@ -182,7 +183,7 @@ private:
 		{
 			DrawCircle(1010, 536, 10, WHITE);
 		}
-	};*/
+	};
 	
 	class BG : public ecs::DrawBase
 	{
@@ -284,7 +285,7 @@ private:
 	bool skip = false;
 
 public:
-	MainScene(ecs::World2D* world, gotoNode<SceneBase> selfNode, gotoNode<SceneBase> nextNode, std::string text0, std::string text1, std::string font) : world(world),selfNode(selfNode), nextNode(nextNode), isInitialized(false), text0(text0), text1(text1), font(font) {}
+	MainScene(ecs::World2D* world, gotoNode<SceneBase> selfNode, gotoNode<SceneBase> nextNode, std::string text0, std::string text1, std::string font) : world(world),selfNode(selfNode), nextNode(nextNode), isInitialized(false), text0(text0), text1(text1), font(font), textId(0) {}
 
 	gotoNode<SceneBase> update() override
 	{
@@ -348,7 +349,7 @@ private:
 
 public:
 	SelectScene(ecs::World2D* world, gotoNode<SceneBase> selfNode, gotoNode<SceneBase> nextNode0, gotoNode<SceneBase> nextNode1, std::string font)
-		: world(world), selfNode(selfNode), nextNode0(nextNode0), nextNode1(nextNode1), font(font), isInitialized(false) {}
+		: world(world), selfNode(selfNode), nextNode0(nextNode0), nextNode1(nextNode1), font(font), isInitialized(false), b0Id(0), b1Id(0) {}
 
 	gotoNode<SceneBase> update() override
 	{
@@ -456,7 +457,7 @@ private:
 
 
 public:
-	FlashScene(ecs::World2D* world, gotoNode<SceneBase> selfNode, gotoNode<SceneBase> nextNode, std::string text0, std::string text1, std::string font) : world(world), selfNode(selfNode), nextNode(nextNode), isInitialized(false), text0(text0), text1(text1), font(font) {}
+	FlashScene(ecs::World2D* world, gotoNode<SceneBase> selfNode, gotoNode<SceneBase> nextNode, std::string text0, std::string text1, std::string font) : world(world), selfNode(selfNode), nextNode(nextNode), isInitialized(false), text0(text0), text1(text1), font(font), textId(0) {}
 
 	gotoNode<SceneBase> update() override
 	{
@@ -535,7 +536,7 @@ private:
 		rlRAII::MusicRAII music = rlRAII::MusicRAII("resource\\music\\2.mp3");
 
 	public:
-		System(std::vector<std::unique_ptr<SceneBase>>& mainList, float& volume) : mainList(mainList), volume(volume)
+		System(std::vector<std::unique_ptr<SceneBase>>& mainList, float& volume) : mainList(mainList), volume(volume), pointer({})
 		{
 			PlayMusicStream(music.get());
 		}
@@ -693,7 +694,7 @@ int main0()
 	}
 	return 0;
 }
-
+*/
 #include "ScriptLoader.h"
 
 int main()
@@ -703,28 +704,34 @@ int main()
 	SetWindowPosition(0, 0);
 	InitAudioDevice();
 
-	SetExitKey(KEY_NULL);
+	SetExitKey(KEY_ESCAPE);
 
 	CFG.textSpeed = 1.0f;
 	CFG.fontData = rlRAII::FileRAII(FONT_PATH);
 	CFG.textBoxBackGround = rlRAII::Texture2DRAII("resource\\img\\TextBoxBackground.png");
 	CFG.chrNameBackGround = rlRAII::Texture2DRAII("resource\\img\\ChrBoxBackground.png");
-	CFG.textSize = 35;
+	CFG.textSize = 36;
 	CFG.readTextColor = { 170, 230, 255, 255 };
 	CFG.chrNameOffsetX = 0.5f;
 	CFG.mainLanguage = 0;
 	CFG.secondaryLanguage = 2;
-	CFG.ScreenWidth = GetScreenWidth();
-	CFG.ScreenHeight = GetScreenHeight();
+
+	auto ScX = GetScreenWidth();
+	auto ScY = GetScreenHeight();
+
+	if (ScX / ScY > 16.0f / 9.0f)
+	{
+		CFG.ScreenHeight = ScY;
+		CFG.ScreenWidth = int(ScY * (16.0f / 9.0f));
+		CFG.drawOffset = { (ScX - CFG.ScreenWidth) / 2.0f, 0.0f };
+	}
+	else
+	{
+		CFG.ScreenWidth = ScX;
+		CFG.ScreenHeight = int(ScX / (16.0f / 9.0f));
+		CFG.drawOffset = { 0.0f, (ScY - CFG.ScreenHeight) / 2.0f };
+	}
 	CFG.readTextSet = std::unordered_set<std::string>();
-
-	AllStates state = AllStates::Menu;
-
-	bool showFPS = true;
-	float volume = 1.0f;
-
-	MenuWorld menu(state, WinWidth, WinHeight, volume);
-	Config config(state, showFPS, volume, WinWidth, WinHeight);
 
 	ecs::World2D main(CFG.ScreenWidth, CFG.ScreenHeight);
 
@@ -738,79 +745,12 @@ int main()
 
 	while (!WindowShouldClose())
 	{
-		AllStates stateTmp = state;
-		switch (stateTmp)
-		{
-		case AllStates::Menu:
-			menu.update();
-			break;
-
-		case AllStates::Config:
-			config.init(menu.getSceenshot().get().texture);
-			config.update();
-			break;
-
-		case AllStates::Main:
-			main.update();
-			break;
-
-		default:
-			break;
-		}
-		if (showFPS)
-		{
-			DrawFPS(10, 40);
-		}
+		main.update();
 
 		BeginDrawing();
 		ClearBackground(BLACK);
-
-		switch (stateTmp)
-		{
-		case AllStates::Menu:
-			menu.draw();
-			break;
-
-		case AllStates::Config:
-			config.draw();
-			break;
-
-		case AllStates::Main:
-			main.draw();
-			break;
-
-		default:
-			break;
-		}
-		if (showFPS)
-		{
-			DrawFPS(10, 40);
-		}
-
-		//DrawTextEx(f.get(), u8"一段非常之长的，可用于测试自动换行的，包含符号的，没有任何现实意义与象征意义的，随便乱打的，废话连篇的测试文本", { 20, 20 }, 50, 5, WHITE);
+		main.draw();
 		EndDrawing();
-
-
-		if (IsKeyPressed(KEY_ESCAPE))
-		{
-			switch (state)
-			{
-			case AllStates::Menu:
-				CloseWindow();
-				break;
-
-			case AllStates::Config:
-				state = AllStates::Menu;
-				break;
-
-			case AllStates::Main:
-				state = AllStates::Menu;
-				break;
-
-			default:
-				break;
-			}
-		}
 	}
 	return 0;
 }

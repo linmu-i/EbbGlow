@@ -15,6 +15,18 @@ namespace ui
 		ButtonPressMsg(ecs::entity senderId, ecs::MessageTypeId typeId) : MessageBase(senderId, typeId) {}
 	};
 
+	class ButtonReleaseMsg : public ecs::MessageBase
+	{
+	public:
+		ButtonReleaseMsg(ecs::entity senderId, ecs::MessageTypeId typeId) : MessageBase(senderId, typeId) {}
+	};
+
+	class ButtonHoverMsg : public ecs::MessageBase
+	{
+	public:
+		ButtonHoverMsg(ecs::entity senderId, ecs::MessageTypeId typeId) : MessageBase(senderId, typeId) {}
+	};
+
 	struct ButtonCom
 	{
 		float x;
@@ -132,7 +144,6 @@ namespace ui
 			{
 				DrawText(text.c_str(), pos.x + textOffset.x, pos.y + textOffset.y, fontSize, textColor);
 			}
-
 		}
 	};
 
@@ -408,106 +419,65 @@ namespace ui
 		ecs::Layers& uiLayer;
 		ecs::MessageManager& msgMgr;
 
-		ecs::MessageTypeId messageTypeId;
+		ecs::MessageTypeId pressTypeId;
+		ecs::MessageTypeId releaseTypeId;
 
 		rlRAII::RenderTexture2DRAII rt;
 
 	public:
 		ButtonExSystem(ecs::DoubleComs<ButtonExCom>* buttons, ecs::Layers* uiLayer, ecs::MessageManager* msgMgr) : buttons(*buttons), uiLayer(*uiLayer), msgMgr(*msgMgr)
 		{
-			messageTypeId = msgMgr->getMessageTypeManager().registeredType<ButtonPressMsg>();
+			pressTypeId = msgMgr->getMessageTypeManager().registeredType<ButtonPressMsg>();
+			releaseTypeId = msgMgr->getMessageTypeManager().registeredType<ButtonReleaseMsg>();
 		}
 
 		void update() override
 		{
 			buttons.active()->forEach
 			(
-				[this](ecs::entity id, ButtonExCom& button)
+				[this](ecs::entity id, ButtonExCom& buttonActive)
 				{
+					auto& buttonInactive = *(buttons.inactive()->get(id));
+					buttonInactive = buttonActive;
 					Vector2 mPos = GetMousePosition();
-					bool inBox = mPos.x < button.pos.x + button.coverage.x && mPos.x > button.pos.x && mPos.y < button.pos.y + button.coverage.y && mPos.y > button.pos.y;
+					bool inBox = mPos.x < buttonActive.pos.x + buttonActive.coverage.x && mPos.x > buttonActive.pos.x && mPos.y < buttonActive.pos.y + buttonActive.coverage.y && mPos.y > buttonActive.pos.y;
 					if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
 					{
-						if (inBox && button.press == false)
+						if (inBox && buttonActive.press == false)
 						{
-							button.press = true;
+							buttonInactive.press = true;
+							msgMgr.addUnicastMessage(std::make_unique<ButtonPressMsg>(ButtonPressMsg(id, pressTypeId)), id);
 						}
 					}
-					if (button.press)
+					if (buttonActive.press)
 					{
 						if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
 						{
 							if (inBox)
 							{
-								button.press = false;
-								msgMgr.addUnicastMessage(std::make_unique<ButtonPressMsg>(ButtonPressMsg(id, messageTypeId)), id);
+								buttonInactive.press = false;
+								msgMgr.addUnicastMessage(std::make_unique<ButtonReleaseMsg>(ButtonReleaseMsg(id, releaseTypeId)), id);
 							}
 							else
 							{
-								button.press = false;
+								buttonInactive.press = false;
 							}
 						}
 					}
 					if (inBox)
 					{
-						if (button.press)
+						if (buttonActive.press)
 						{
-							uiLayer[button.layerDepth].push_back(std::make_unique<ButtonExDraw>(ButtonExDraw(button, button.pressIcon)));
+							uiLayer[buttonActive.layerDepth].push_back(std::make_unique<ButtonExDraw>(ButtonExDraw(buttonActive, buttonActive.pressIcon)));
 						}
 						else
 						{
-							uiLayer[button.layerDepth].push_back(std::make_unique<ButtonExDraw>(ButtonExDraw(button, button.hoverIcon)));
+							uiLayer[buttonActive.layerDepth].push_back(std::make_unique<ButtonExDraw>(ButtonExDraw(buttonActive, buttonActive.hoverIcon)));
 						}
 					}
 					else
 					{
-						uiLayer[button.layerDepth].push_back(std::make_unique<ButtonExDraw>(ButtonExDraw(button, button.baseIcon)));
-					}
-				}
-			);
-
-			buttons.inactive()->forEach
-			(
-				[this](ecs::entity id, ButtonExCom& button)
-				{
-					Vector2 mPos = GetMousePosition();
-					bool inBox = mPos.x < button.pos.x + button.coverage.x && mPos.x > button.pos.x && mPos.y < button.pos.y + button.coverage.y && mPos.y > button.pos.y;
-					if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-					{
-						if (inBox && button.press == false)
-						{
-							button.press = true;
-						}
-					}
-					if (button.press)
-					{
-						if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
-						{
-							if (inBox)
-							{
-								button.press = false;
-								msgMgr.addUnicastMessage(std::make_unique<ButtonPressMsg>(ButtonPressMsg(id, messageTypeId)), id);
-							}
-							else
-							{
-								button.press = false;
-							}
-						}
-					}
-					if (inBox)
-					{
-						if (button.press)
-						{
-							uiLayer[button.layerDepth].push_back(std::make_unique<ButtonExDraw>(ButtonExDraw(button, button.pressIcon)));
-						}
-						else
-						{
-							uiLayer[button.layerDepth].push_back(std::make_unique<ButtonExDraw>(ButtonExDraw(button, button.hoverIcon)));
-						}
-					}
-					else
-					{
-						uiLayer[button.layerDepth].push_back(std::make_unique<ButtonExDraw>(ButtonExDraw(button, button.baseIcon)));
+						uiLayer[buttonActive.layerDepth].push_back(std::make_unique<ButtonExDraw>(ButtonExDraw(buttonActive, buttonActive.baseIcon)));
 					}
 				}
 			);
@@ -529,9 +499,8 @@ namespace ui
 		std::string text;
 
 		rlRAII::FontRAII font;
-		float fontSize;
+		float textSize;
 		rlRAII::FileRAII fontData;
-		//std::string fontPath;
 
 		bool initialized;
 
@@ -550,43 +519,31 @@ namespace ui
 			Vector2 position,
 			Color textColor,
 			int layerDepth,
-			float fontSize,
+			float textSize,
 			float spacing,
 			float rotation = 0
-		) : fontData(fontData), text(text), position(position), textColor(textColor), fontSize(fontSize), spacing(spacing), rotation(rotation), layerDepth(layerDepth), initialized(false)
+		) : fontData(fontData), text(text), position(position), textColor(textColor), textSize(textSize), spacing(spacing), rotation(rotation), layerDepth(layerDepth), initialized(false)
 		{
-			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), fontSize));
+			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), textSize));
 		}
 
 		void resetText(const char* newText)
 		{
 			text = newText;
-			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(newText, fontData.fileName(), fontData.get(), fontData.size(), fontSize));
+			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(newText, fontData.fileName(), fontData.get(), fontData.size(), textSize * 2.0f));
 		}
 		void resetFont(rlRAII::FileRAII newFont)
 		{
 			fontData = newFont;
-			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), fontSize));
+			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), textSize * 2.0f));
 		}
 		void resetFontSize(float newFontSize)
 		{
-			fontSize = newFontSize;
-			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), fontSize));
+			textSize = newFontSize;
+			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), textSize * 2.0f));
 		}
 
-		void unload()
-		{
-			font.~FontRAII();
-			initialized = false;
-		}
 
-		void load()
-		{
-			if (!initialized)
-			{
-				font = rlRAII::FontRAII(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), fontSize));
-			}
-		}
 	};
 
 	class TextBoxExDraw : public ecs::DrawBase
@@ -595,7 +552,7 @@ namespace ui
 		std::string text;
 
 		rlRAII::FontRAII font;
-		float fontSize;
+		float textSize;
 		Vector2 position;
 
 		Color textColor;
@@ -604,13 +561,13 @@ namespace ui
 
 	public:
 		TextBoxExDraw(TextBoxExCom& textBoxEx) : 
-			text(textBoxEx.text), font(textBoxEx.font), fontSize(textBoxEx.fontSize), 
+			text(textBoxEx.text), font(textBoxEx.font), textSize(textBoxEx.textSize),
 			position(textBoxEx.position), textColor(textBoxEx.textColor), rotation(textBoxEx.rotation), spacing(textBoxEx.spacing)
 		{}
 
 		void draw() override
 		{
-			DrawTextPro(font.get(), text.c_str(), position, { 0,0 }, rotation, fontSize, spacing, textColor);
+			DrawTextPro(font.get(), text.c_str(), position, { 0,0 }, rotation, textSize, spacing, textColor);
 			//DrawTextureEx(font.get().texture, { 0,0 }, 0, 0.5, WHITE);
 		}
 	};
@@ -935,4 +892,5 @@ namespace ui
 		world.addPool<ImageBoxExCom>();
 		world.addSystem(ImageBoxExSystem(world.getDoubleBuffer<ImageBoxExCom>(), world.getUnitsLayer()));
 	}
+
 }
