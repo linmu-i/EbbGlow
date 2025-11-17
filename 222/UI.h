@@ -5,7 +5,7 @@
 #include "raylibRAII.h"
 #include "Message.h"
 #include "RLUtils.h"
-
+#include "TouchEx.h"
 
 namespace ui
 {
@@ -352,6 +352,8 @@ namespace ui
 
 		float iconScale;
 
+		bool touch;
+
 		ButtonExCom
 		(
 			rlRAII::FileRAII fontData,
@@ -369,7 +371,7 @@ namespace ui
 			uint8_t layerDepth,
 			float iconScale
 		) : fontPath(fontPath), baseIcon(baseIcon), hoverIcon(hoverIcon), pressIcon(pressIcon), text(text), textColor(textColor),
-			textSize(textSize), spacing(spacing), pos(pos), coverage(coverage), layerDepth(layerDepth), press(false), iconScale(iconScale)
+			textSize(textSize), spacing(spacing), pos(pos), coverage(coverage), layerDepth(layerDepth), press(false), iconScale(iconScale), touch(false)
 		{
 			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), textSize * 2.0f));
 		}
@@ -406,7 +408,6 @@ namespace ui
 			if (text.length() > 0)
 			{
 				Vector2 offset = TextCenteredOffset(font.get(), text, fontSize, spacing, coverage);
-				//DrawSDFText(font.get(), text.c_str(), (pos + offset), fontSize, spacing, textColor);
 				DrawTextEx(font.get(), text.c_str(), (pos + offset), fontSize, spacing, textColor);
 			}
 		}
@@ -440,6 +441,34 @@ namespace ui
 					auto& buttonInactive = *(buttons.inactive()->get(id));
 					buttonInactive = buttonActive;
 					Vector2 mPos = GetMousePosition();
+					int touchCount = GetTouchPointCountEx();
+					
+					buttonInactive.touch = false;
+
+					bool touchInbox = false;
+					if (!CheckCollisionPointRec(mPos, { buttonActive.pos.x, buttonActive.pos.y, buttonActive.coverage.x, buttonActive.coverage.y }) && touchCount > 0)
+					{
+						for (int i = 0; i < touchCount; ++i)
+						{
+							auto touchPos = GetTouchPositionEx(i);
+							if (CheckCollisionPointRec(touchPos, { buttonActive.pos.x, buttonActive.pos.y, buttonActive.coverage.x, buttonActive.coverage.y }))
+							{
+								mPos = touchPos;
+								buttonInactive.touch = true;
+								touchInbox = true;
+								break;
+							}
+						}
+					}
+					if (buttonActive.touch && !buttonInactive.touch)
+					{
+						msgMgr.addUnicastMessage(std::make_unique<ButtonReleaseMsg>(ButtonReleaseMsg(id, releaseTypeId)), id);
+					}
+					if (!buttonActive.touch && buttonInactive.touch)
+					{
+						msgMgr.addUnicastMessage(std::make_unique<ButtonPressMsg>(ButtonPressMsg(id, pressTypeId)), id);
+					}
+					
 					bool inBox = mPos.x < buttonActive.pos.x + buttonActive.coverage.x && mPos.x > buttonActive.pos.x && mPos.y < buttonActive.pos.y + buttonActive.coverage.y && mPos.y > buttonActive.pos.y;
 					if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
 					{
@@ -464,9 +493,9 @@ namespace ui
 							}
 						}
 					}
-					if (inBox)
+					if (inBox || touchInbox)
 					{
-						if (buttonActive.press)
+						if (buttonActive.press || buttonActive.touch)
 						{
 							uiLayer[buttonActive.layerDepth].push_back(std::make_unique<ButtonExDraw>(ButtonExDraw(buttonActive, buttonActive.pressIcon)));
 						}

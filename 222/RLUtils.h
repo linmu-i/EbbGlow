@@ -2,6 +2,7 @@
 
 #include "raylib.h"
 #include "raylibRAII.h"
+#include "TouchEx.h"
 #include <vector>
 
 Font LoadFont_cn(const char* fileName, int fontSize) {
@@ -676,4 +677,20 @@ std::vector<std::vector<int>> TextLineCaculateWithWordWrap(std::string text, flo
 
 	UnloadCodepoints(codepoints);
 	return result;
+}
+
+bool IsTouchPress() noexcept
+{
+	static int count = 0;
+	int tmp = GetTouchPointCountEx();
+	if (count == 0 && tmp > 0)
+	{
+		count = tmp;
+		return true;
+	}
+	else
+	{
+		count = tmp;
+		return false;
+	}
 }

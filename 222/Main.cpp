@@ -703,6 +703,7 @@ int main()
 	InitWindow(GetScreenWidth(), GetScreenHeight(), "");
 	SetWindowPosition(0, 0);
 	InitAudioDevice();
+	InitTouchEx();
 
 	SetExitKey(KEY_ESCAPE);
 

@@ -243,7 +243,7 @@ namespace visualnovel
 				}
 				else
 				{
-					if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL) || IsKeyPressed(KEY_SPACE) || GetMouseWheelMove() < 0.0f)
+					if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL) || IsKeyPressed(KEY_SPACE) || GetMouseWheelMove() < 0.0f || IsTouchPress())
 					{
 						clicked = true;
 					}
