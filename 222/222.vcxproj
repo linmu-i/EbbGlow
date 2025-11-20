@@ -148,7 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="TouchWindows.cpp" />
+    <ClCompile Include="Windows.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Animation.h" />
@@ -158,7 +158,7 @@
     <ClInclude Include="Message.h" />
     <ClInclude Include="raylibRAII.h" />
     <ClInclude Include="ScriptLoader.h" />
-    <ClInclude Include="TouchEx.h" />
+    <ClInclude Include="Platform.h" />
     <ClInclude Include="UI.h" />
     <ClInclude Include="World.h" />
     <ClInclude Include="VisualNovel.h" />

@@ -21,7 +21,7 @@
     <ClCompile Include="Main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="TouchWindows.cpp">
+    <ClCompile Include="Windows.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -56,7 +56,7 @@
     <ClInclude Include="ScriptLoader.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="TouchEx.h">
+    <ClInclude Include="Platform.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

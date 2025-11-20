@@ -737,7 +737,7 @@ int main()
 	ecs::World2D main(CFG.ScreenWidth, CFG.ScreenHeight);
 
 	rlRAII::FileRAII sc("Script.txt");
-	vn::ScriptLoader scLoader(main, sc, CFG);
+	vn::ScriptLoader scLoader(main, "Script.txt", CFG);
 	auto task = scLoader.load();
 	vn::ApplyScriptLoader(main, scLoader, CFG);
 	
@@ -751,6 +751,7 @@ int main()
 		BeginDrawing();
 		ClearBackground(BLACK);
 		main.draw();
+		DrawFPS(10, 10);
 		EndDrawing();
 	}
 	return 0;

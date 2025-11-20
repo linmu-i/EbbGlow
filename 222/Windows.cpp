@@ -1,4 +1,4 @@
-#include "TouchEx.h"
+#include "Platform.h"
 
 #ifdef _WIN32
 
@@ -60,22 +60,6 @@ static bool GetTouchDataFromPointer(UINT32 pointerId, TouchPoint& outPoint) {
             }
         }
     }
-    // 注意：PT_TOUCH 通常不提供压力，故保留 1.0f
-    // 若需基于接触面积模拟压力，可启用以下代码（按需取消注释）：
-    /*
-    else if (pi.pointerType == PT_TOUCH) {
-        POINTER_TOUCH_INFO pti;
-        if (GetPointerTouchInfo(pointerId, &pti)) {
-            if (pti.touchMask & TOUCH_MASK_CONTACTAREA) {
-                float width = static_cast<float>(pti.rcContact.right - pti.rcContact.left);
-                float height = static_cast<float>(pti.rcContact.bottom - pti.rcContact.top);
-                float area = width * height;
-                pressure = area / 10000.0f;
-                if (pressure > 1.0f) pressure = 1.0f;
-            }
-        }
-    }
-    */
 
     outPoint.pressure = pressure;
     return true;
@@ -221,5 +205,26 @@ void CloseTouchEx() {
         UnregisterTouchWindow(g_windowHandle);
     }
 }
+
+char* LoadANSI(const char* utf8, int length)
+{
+    int utf16Length = MultiByteToWideChar(CP_UTF8, 0, utf8, length, nullptr, 0);
+
+    wchar_t* utf16 = (wchar_t*)malloc(utf16Length * sizeof(wchar_t));
+    MultiByteToWideChar(CP_UTF8, 0, utf8, length, utf16, utf16Length);
+
+    int ansiLength = WideCharToMultiByte(CP_ACP, 0, utf16, utf16Length, nullptr, 0, nullptr, nullptr);
+    char* ansi = (char*)malloc(ansiLength + 1);
+    ansi[ansiLength * sizeof(char)] = '\0';
+    WideCharToMultiByte(CP_ACP, 0, utf16, utf16Length, ansi, ansiLength, nullptr, nullptr);
+    free(utf16);
+    return ansi;
+}
+
+void UnloadANSI(char* ansi)
+{
+    free(ansi);
+}
+
 
 #endif // _WIN32

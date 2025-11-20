@@ -5,7 +5,7 @@
 #include "raylibRAII.h"
 #include "Message.h"
 #include "RLUtils.h"
-#include "TouchEx.h"
+#include "Platform.h"
 
 namespace ui
 {

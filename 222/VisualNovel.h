@@ -42,7 +42,7 @@ namespace visualnovel
 		Vector2 drawOffset = { 0,0 };
 
 	};
-
+	
 	const Vector2 StandardTextBoxDefaultPosition = { GetScreenWidth() / 6, GetScreenHeight() / 3 * 2};
 
 	struct StandardTextBox
@@ -100,7 +100,7 @@ namespace visualnovel
 			}
 
 			std::vector<std::vector<int>> t1 = TextLineCaculateWithWordWrap(textL1.c_str(), textSize, spacing, font.get(), width);
-
+			
 			for (auto& s : t1)
 			{
 				auto text = LoadUTF8(s.data(), s.size());

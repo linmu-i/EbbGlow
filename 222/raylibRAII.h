@@ -748,6 +748,7 @@ namespace rlRAII
 
 		public:
 			Iterator() : fileSize(0), offset(0), pointer(nullptr) {}
+			Iterator(size_t size, unsigned char* data, int64_t offset = 0) : fileSize(size), pointer(data), offset(offset) {}
 			Iterator(FileRAII file) : fileSize(file.dataSize), pointer(file.fileData), offset(0) {}
 			Iterator(FileRAII file, int64_t offset) : fileSize(file.dataSize), pointer(file.fileData + offset), offset(offset) {}
 

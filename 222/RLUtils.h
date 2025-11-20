@@ -2,7 +2,7 @@
 
 #include "raylib.h"
 #include "raylibRAII.h"
-#include "TouchEx.h"
+#include "Platform.h"
 #include <vector>
 
 Font LoadFont_cn(const char* fileName, int fontSize) {

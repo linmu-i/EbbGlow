@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <future>
+#include <variant>
 
 #include "ECS.h"
 #include "World.h"
@@ -10,6 +11,96 @@
 
 namespace visualnovel
 {
+	class ScriptData
+	{
+	private:
+		unsigned char* data;
+		size_t size;
+
+	public:
+		ScriptData() : data(nullptr), size(0) {}
+		ScriptData(const char* filePath)
+		{
+			std::ifstream file(filePath, std::ios::binary | std::ios::ate);
+			if (file)
+			{
+				size = file.tellg();
+				data = new unsigned char[size];
+				file.seekg(0, std::ios::beg);
+				file.read(reinterpret_cast<char*>(data), size);
+				file.close();
+			}
+			else
+			{
+				data = nullptr;
+				size = 0;
+			}
+		}
+		ScriptData(const ScriptData&) = delete;
+		ScriptData(ScriptData&& other) noexcept : data(other.data), size(other.size)
+		{
+			other.data = nullptr;
+			other.size = 0;
+		}
+
+		~ScriptData()
+		{
+			delete[] data;
+		}
+
+		
+		ScriptData& operator=(const ScriptData&) = delete;
+
+		ScriptData& operator=(ScriptData&& other) noexcept
+		{
+			if (this != &other)
+			{
+				delete[] data;
+				data = other.data;
+				size = other.size;
+				other.data = nullptr;
+				other.size = 0;
+			}
+			return *this;
+		}
+
+		ScriptData& operator+=(const ScriptData& other)
+		{
+			unsigned char* newData = new unsigned char[size + other.size + 1];
+			memcpy(newData, data, size);
+			newData[size] = '\n';
+			memcpy(newData + size + 1, other.data, other.size);
+			delete[] data;
+			data = newData;
+			size += (other.size + 1);
+			return *this;
+		}
+
+		ScriptData& operator+=(const rlRAII::FileRAII& other)
+		{
+			unsigned char* newData = new unsigned char[size + other.size() + 1];
+			memcpy(newData, data, size);
+			newData[size] = '\n';
+			memcpy(newData + size + 1, other.get(), other.size());
+			delete[] data;
+			data = newData;
+			size += (other.size() + 1);
+			return *this;
+		}
+
+		rlRAII::FileRAII::Iterator begin()
+		{
+			return rlRAII::FileRAII::Iterator(size, data);
+		}
+		rlRAII::FileRAII::Iterator end()
+		{
+			return rlRAII::FileRAII::Iterator(size, data, size);
+		}
+
+		const unsigned char* getData() const { return data; }
+		size_t getSize() const { return size; }
+	};
+
 	class MusicManager : public ecs::SystemBase
 	{
 	private:
@@ -35,16 +126,20 @@ namespace visualnovel
 	public:
 		struct SceneView
 		{
-			static constexpr uint8_t TYPE_TEXTSCENE = 0;
-			static constexpr uint8_t TYPE_SELECTSCENE = 1;
+			enum class SceneType : uint8_t
+			{
+				TYPE_TEXTSCENE = 0,
+				TYPE_SELECTSCENE = 1
+			};
 			std::string sceneName;
-			uint8_t sceneType;
+			SceneType sceneType;
 			std::string text;
 		};
 
 	private:
 		ecs::World2D& world;
-		rlRAII::FileRAII script;
+		//rlRAII::FileRAII script;
+		ScriptData script;
 		visualnovel::VisualNovelConfig& cfg;
 
 		std::unordered_map<std::string, rlRAII::FileRAII::Iterator> viewer;
@@ -52,6 +147,38 @@ namespace visualnovel
 		std::vector<std::string> targetScene;
 		std::vector<ecs::entity> idList;
 		std::vector<ecs::entity> exIdList;
+
+		std::vector<std::string> StringStorage;
+		std::vector<double> NumberStorage;
+
+		enum class VarType : uint8_t
+		{
+			Str,
+			Num
+		};
+
+		struct VariableView
+		{
+			VarType type;
+			uint32_t offset;
+			uint16_t length;
+		};
+
+		std::unordered_map<std::string, VariableView> variables;
+
+		VariableView GetVariable(const std::string& name)
+		{
+			auto it = variables.find(name);
+			if (it != variables.end())
+			{
+				return it->second;
+			}
+			else
+			{
+				return VariableView{ VarType::Num, 0, 0 };
+			}
+		}
+
 		enum class BackgroundDrawType : uint8_t
 		{
 			Contain,
@@ -114,10 +241,49 @@ namespace visualnovel
 			}
 		}
 
+
 		void ReadNextString(std::string& textBuf, rlRAII::FileRAII::Iterator& nextScene)
 		{
 			textBuf.clear();
-			while (*nextScene != '"' && !nextScene.eof()) ++nextScene;
+			while (*nextScene != '"' && *nextScene != '$' && !nextScene.eof()) ++nextScene;
+			if (*nextScene == '$')
+			{
+				++nextScene;
+				std::string varName;
+				while (!isspace(*nextScene) && *nextScene != '[' && !nextScene.eof())
+				{
+					varName += *nextScene;
+					++nextScene;
+				}
+				int32_t index = 0;
+				if (*nextScene == '[')
+				{
+					++nextScene;
+					std::string indexBuf;
+					while (*nextScene != ']' && !nextScene.eof())
+					{
+						indexBuf += *nextScene;
+						++nextScene;
+					}
+					if (!indexBuf.empty())
+						index = static_cast<int32_t>(std::stoi(indexBuf));
+					if (*nextScene == ']')
+						++nextScene;
+				}
+				auto varView = GetVariable(varName);
+				if (varView.length != 0 && varView.type == VarType::Str)
+				{
+					if (index >= 0 && index < varView.length)
+					{
+						textBuf = StringStorage[varView.offset + index];
+					}
+				}
+				else
+				{
+					textBuf = "";
+				}
+				return;
+			}
 			++nextScene;
 			while (*nextScene != '"' && !nextScene.eof())
 			{
@@ -134,6 +300,170 @@ namespace visualnovel
 			}
 			++nextScene;
 		};
+
+		std::string GetString(rlRAII::FileRAII::Iterator& nextScene)
+		{
+			std::string result;
+			std::string buf;
+			while (*nextScene != ')' && *nextScene != ',' && !nextScene.eof())
+			{
+				ReadNextString(buf, nextScene);
+				result += buf;
+			}
+			++nextScene;
+			return result;
+		}
+
+		void SkipSpaceUntil(rlRAII::FileRAII::Iterator& ptr, unsigned char stop)
+		{
+			while (!ptr.eof() && *ptr != stop && std::isspace(static_cast<unsigned char>(*ptr)))
+				++ptr;
+		}
+
+		double f0(rlRAII::FileRAII::Iterator& ptr, unsigned char stop)
+		{
+			SkipSpaceUntil(ptr, stop);
+			if (ptr.eof() || *ptr == stop) return 0.0;
+
+			char c = *ptr;
+
+			if (c == '$')
+			{
+				++ptr;
+				std::string varName;
+				while (!ptr.eof() && *ptr != stop && (std::isalpha(static_cast<unsigned char>(*ptr)) || *ptr == '_' || isdigit(*ptr)))
+				{
+					varName += *ptr;
+					++ptr;
+				}
+
+				int32_t index = 0;
+				if (!ptr.eof() && *ptr != stop && *ptr == '[')
+				{
+					++ptr;
+					SkipSpaceUntil(ptr, stop);
+					if (ptr.eof() || *ptr == stop) return 0.0;
+
+					//std::string indexBuf;
+					//while (!ptr.eof() && *ptr != stop && std::isdigit(static_cast<unsigned char>(*ptr)))
+					//{
+					//	indexBuf += *ptr;
+					//	++ptr;
+					//}
+					//if (!indexBuf.empty())
+					//	index = static_cast<int32_t>(std::stoi(indexBuf));
+					index = (int)round(f2(ptr, ']'));
+
+					SkipSpaceUntil(ptr, stop);
+					if (!ptr.eof() && *ptr != stop && *ptr == ']')
+						++ptr;
+				}
+
+				auto varView = GetVariable(varName);
+				if (varView.length == 0)
+					return 0.0;
+				if (varView.type == VarType::Num)
+					return NumberStorage[varView.offset + index];
+				return 0.0;
+			}
+
+			if (c == '+')
+			{
+				++ptr;
+				return +f0(ptr, stop);
+			}
+			if (c == '-')
+			{
+				++ptr;
+				return -f0(ptr, stop);
+			}
+
+			if (std::isdigit(static_cast<unsigned char>(c)) || c == '.')
+			{
+				std::string numberBuf;
+				while (!ptr.eof() && *ptr != stop &&
+					(std::isdigit(static_cast<unsigned char>(*ptr)) || *ptr == '.'))
+				{
+					if (*ptr == '.' && numberBuf.find('.') != std::string::npos) break;
+					numberBuf += *ptr;
+					++ptr;
+				}
+				if (numberBuf.empty()) return 0.0;
+				return std::stod(numberBuf);
+			}
+
+			if (c == '(')
+			{
+				++ptr;
+				double val = f2(ptr, stop);
+				SkipSpaceUntil(ptr, stop);
+				if (!ptr.eof() && *ptr != stop && *ptr == ')')
+					++ptr;
+				return val;
+			}
+
+			return 0.0;
+		}
+
+		double f1(rlRAII::FileRAII::Iterator& ptr, unsigned char stop)
+		{
+			double result = f0(ptr, stop);
+			SkipSpaceUntil(ptr, stop);
+
+			while (!ptr.eof() && *ptr != stop)
+			{
+				char op = *ptr;
+				if (op == '*' || op == '/' || op == '%')
+				{
+					++ptr;
+					SkipSpaceUntil(ptr, stop);
+					double rhs = (ptr.eof() || *ptr == stop) ? 0.0 : f0(ptr, stop);
+					if (op == '*')
+						result *= rhs;
+					else if (op == '/')
+						result = (rhs == 0.0) ? std::numeric_limits<double>::quiet_NaN() : result / rhs;
+					else if (op == '%')
+						result = std::fmod(result, rhs);
+					SkipSpaceUntil(ptr, stop);
+				}
+				else
+					break;
+			}
+			return result;
+		}
+
+		double f2(rlRAII::FileRAII::Iterator& ptr, unsigned char stop)
+		{
+			double result = f1(ptr, stop);
+			SkipSpaceUntil(ptr, stop);
+
+			while (!ptr.eof() && *ptr != stop)
+			{
+				char op = *ptr;
+				if (op == '+' || op == '-')
+				{
+					++ptr;
+					SkipSpaceUntil(ptr, stop);
+					double rhs = (ptr.eof() || *ptr == stop) ? 0.0 : f1(ptr, stop);
+					if (op == '+')
+						result += rhs;
+					else
+						result -= rhs;
+					SkipSpaceUntil(ptr, stop);
+				}
+				else
+					break;
+			}
+			return result;
+		}
+
+		double GetNumber(rlRAII::FileRAII::Iterator& nextScene, unsigned char stop)
+		{
+			double result = f2(nextScene, stop);
+			while ((*nextScene != ',' && *nextScene != ')') && !nextScene.eof()) ++nextScene;
+			++nextScene;
+			return result;
+		}
 		void ReadNextNumber(std::string& textBuf, rlRAII::FileRAII::Iterator& nextScene)
 		{
 			textBuf.clear();
@@ -143,13 +473,78 @@ namespace visualnovel
 				textBuf += *nextScene;
 				++nextScene;
 			}
+			while ((*nextScene != ',' && *nextScene != ')') && !nextScene.eof()) ++nextScene;
+			++nextScene;
+		}
+		void ReadNextStateTag(std::string& textBuf, rlRAII::FileRAII::Iterator& nextScene)
+		{
+			textBuf.clear();
+			while (*nextScene != '@' && !nextScene.eof()) ++nextScene;
+			++nextScene;
+			while (isspace(*nextScene) && !nextScene.eof()) ++nextScene;
+			while (!isspace(*nextScene) && *nextScene != ',' && *nextScene != ')' && !nextScene.eof())
+			{
+				textBuf += *nextScene;
+				++nextScene;
+			}
+			while ((*nextScene != ',' && *nextScene != ')') && !nextScene.eof()) ++nextScene;
+			++nextScene;
 		}
 
 	public:
-		ScriptLoader(ecs::World2D& world, rlRAII::FileRAII script, vn::VisualNovelConfig& cfg) : world(world), script(script), cfg(cfg) {}
+		ScriptLoader(ecs::World2D& world, const std::string& script, vn::VisualNovelConfig& cfg) : world(world), script(script.c_str()), cfg(cfg) {}
 
 		std::future<void> load()
 		{
+			auto scriptPtr = script.begin();
+			//if (memcmp(scriptPtr.get(), "Global", 6)) return std::async(std::launch::deferred, []() {});
+			//while (*scriptPtr != '\n' && !scriptPtr.eof()) ++scriptPtr;
+			//++scriptPtr;
+			while (memcmp(scriptPtr.get(), "Scene", 5) && !scriptPtr.eof())
+			{
+				if (!memcmp(scriptPtr.get(), "String", 6))
+				{
+					scriptPtr += 6;
+					int length = 1;
+					if (*scriptPtr == '[')
+					{
+						length = std::max(1, (int)round(GetNumber(scriptPtr, ']')));
+						while (!scriptPtr.eof() && *scriptPtr != ']') ++scriptPtr;
+						++scriptPtr;
+					}
+					SkipSpaceUntil(scriptPtr, '\n');
+					std::string varName;
+					while (!scriptPtr.eof() && *scriptPtr != '\n' && !isspace(*scriptPtr))
+					{
+						varName += *scriptPtr;
+						++scriptPtr;
+					}
+					StringStorage.resize(StringStorage.size() + length);
+					variables[varName] = VariableView{ VarType::Str, static_cast<uint32_t>(StringStorage.size() - length), static_cast<uint16_t>(length) };
+				}
+				else if (!memcmp(scriptPtr.get(), "Number", 6))
+				{
+					scriptPtr += 6;
+					int length = 1;
+					if (*scriptPtr == '[')
+					{
+						length = std::max(1, (int)round(GetNumber(scriptPtr, ']')));
+						while (!scriptPtr.eof() && *scriptPtr != ']') ++scriptPtr;
+						++scriptPtr;
+					}
+					SkipSpaceUntil(scriptPtr, '\n');
+					std::string varName;
+					while (!scriptPtr.eof() && *scriptPtr != '\n' && !isspace(*scriptPtr))
+					{
+						varName += *scriptPtr;
+						++scriptPtr;
+					}
+					NumberStorage.resize(NumberStorage.size() + length);
+					variables[varName] = VariableView{ VarType::Num, static_cast<uint32_t>(NumberStorage.size() - length), static_cast<uint16_t>(length) };
+				}
+				//else if
+				++scriptPtr;
+			}
 			return std::async(std::launch::async, [this]()
 				{
 					auto iter = script.begin();
@@ -178,12 +573,18 @@ namespace visualnovel
 		}
 
 		void loadScene(rlRAII::FileRAII::Iterator);
+
+		void addLog(const SceneView& sceneView)
+		{
+			logs.emplace(sceneView.sceneName, sceneView);
+		}
 	};
 
 	struct TextSceneCom
 	{
 		ecs::entity txtBoxId;
 		rlRAII::FileRAII::Iterator nextScene;
+		ScriptLoader::SceneView view;
 	};
 
 	class TextSceneSystem : public ecs::SystemBase
@@ -232,6 +633,7 @@ namespace visualnovel
 					{
 						if (textBoxComs->active()->get(comActive.txtBoxId)->activePixel >= textBoxComs->active()->get(comActive.txtBoxId)->totalPixel)
 						{
+							scLoader->addLog(comActive.view);
 							scLoader->loadScene(comActive.nextScene);
 						}
 						else
@@ -308,6 +710,7 @@ namespace visualnovel
 		while (isspace(*nextScene) && !nextScene.eof()) ++nextScene;
 		std::string sceneName;
 		std::string sceneType;
+		std::string textTmp;
 		std::vector<std::string> targetList;
 		while (*nextScene != '(' && !isspace(*nextScene) && !nextScene.eof())
 		{
@@ -349,23 +752,20 @@ namespace visualnovel
 				std::vector<std::string> texts;
 				std::string bg;
 				nextScene += 10;
-				auto LoadText = [&textBuf, &nextScene, this]()
-					{
-						ReadNextString(textBuf, nextScene);
-					};
-				LoadText();
+				textBuf = GetString(nextScene);//ReadNextString(textBuf, nextScene);
 				texts.push_back(textBuf);
-				LoadText();
+				textBuf = GetString(nextScene);//ReadNextString(textBuf, nextScene);
 				texts.push_back(textBuf);
-				LoadText();
+				textBuf = GetString(nextScene);//ReadNextString(textBuf, nextScene);
 				texts.push_back(textBuf);
-				LoadText();
+				textBuf = GetString(nextScene);//ReadNextString(textBuf, nextScene);
 				texts.push_back(textBuf);
-				LoadText();
+				textBuf = GetString(nextScene);//ReadNextString(textBuf, nextScene);
 				bg = textBuf;
-				LoadText();
+				ReadNextStateTag(textBuf, nextScene);
 				auto readIt = cfg.readTextSet.find(sceneName);
 				BackgroundDrawType bgType;
+				textTmp = texts[cfg.mainLanguage];
 				if (textBuf == "Cover")
 				{
 					bgType = BackgroundDrawType::Cover;
@@ -392,7 +792,7 @@ namespace visualnovel
 			{
 				nextScene += 4;
 				std::string nameBuf;
-				ReadNextString(nameBuf, nextScene);
+				nameBuf = GetString(nextScene);//ReadNextString(nameBuf, nextScene);
 
 				int offsetX = cfg.ScreenWidth * (1.0f / 12.0f);
 				int offsetY = cfg.ScreenHeight * 0.0625;
@@ -413,7 +813,9 @@ namespace visualnovel
 			}
 			else if (!memcmp(nextScene.get(), "Button", 6) && (nextScene[6] == '(' || isspace(nextScene[6])))
 			{
-				nextScene += 7;
+				nextScene += 6;
+				while (*nextScene != '(') ++nextScene;
+				++nextScene;
 				float relativeX, relativeY, ratio, width;
 				std::vector<std::string> languages;
 				std::string buf;
@@ -422,25 +824,21 @@ namespace visualnovel
 				rlRAII::Texture2DRAII normalImg;
 				rlRAII::Texture2DRAII hoverImg;
 				rlRAII::Texture2DRAII pressImg;
-				ReadNextNumber(buf, nextScene);
-				relativeX = std::stof(buf);
-				ReadNextNumber(buf, nextScene);
-				relativeY = std::stof(buf);
-				ReadNextNumber(buf, nextScene);
-				ratio = std::stof(buf);
-				ReadNextNumber(buf, nextScene);
-				width = std::stof(buf);
+				relativeX = GetNumber(nextScene, ',');
+				relativeY = GetNumber(nextScene, ',');
+				ratio = GetNumber(nextScene, ',');
+				width = GetNumber(nextScene, ',');
 
-				ReadNextString(buf, nextScene);
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
 				languages.push_back(buf);
-				ReadNextString(buf, nextScene);
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
 				languages.push_back(buf);
-				ReadNextString(buf, nextScene);
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
 				languages.push_back(buf);
-				ReadNextString(buf, nextScene);
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
 				languages.push_back(buf);
 
-				ReadNextString(alignment, nextScene);
+				ReadNextStateTag(alignment, nextScene);
 
 				ReadNextNumber(buf, nextScene);
 				textColor.r = std::stoi(buf);
@@ -451,11 +849,11 @@ namespace visualnovel
 				ReadNextNumber(buf, nextScene);
 				textColor.a = std::stoi(buf);
 
-				ReadNextString(buf, nextScene);
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
 				normalImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
-				ReadNextString(buf, nextScene);
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
 				hoverImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
-				ReadNextString(buf, nextScene);
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
 				pressImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
 
 				float offsetX = cfg.ScreenWidth * relativeX, offsetY = cfg.ScreenHeight * relativeY;
@@ -523,26 +921,22 @@ namespace visualnovel
 				float relativeX, relativeY, ratio, width, scale, x, y;
 				rlRAII::Texture2DRAII img;
 				std::string buf;
-				ReadNextNumber(buf, nextScene);
-				relativeX = std::stof(buf);
-				ReadNextNumber(buf, nextScene);
-				relativeY = std::stof(buf);
-				ReadNextNumber(buf, nextScene);
-				ratio = std::stof(buf);
-				ReadNextNumber(buf, nextScene);
-				width = std::stof(buf);
-				ReadNextString(buf, nextScene);
+				relativeX = GetNumber(nextScene, ',');
+				relativeY = GetNumber(nextScene, ',');
+				ratio = GetNumber(nextScene, ',');
+				width = GetNumber(nextScene, ',');
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
 				img = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
-				ReadNextString(buf, nextScene);
+				ReadNextStateTag(buf, nextScene);
 				if (buf == "Cover")
 				{
-					scale = std::max(width * cfg.ScreenWidth / img.get().width, width / ratio * cfg.ScreenWidth / img.get().height);//std::max((width * cfg.ScreenWidth) / img.get().width, (width * cfg.ScreenWidth / ratio) / img.get().height);
+					scale = std::max(width * cfg.ScreenWidth / img.get().width, width / ratio * cfg.ScreenWidth / img.get().height);
 				}
 				else
 				{
-					scale = std::min(width * cfg.ScreenWidth / img.get().width, width / ratio * cfg.ScreenWidth / img.get().height);//std::min((width * cfg.ScreenWidth) / img.get().width, (width * cfg.ScreenWidth / ratio) / img.get().height);
+					scale = std::min(width * cfg.ScreenWidth / img.get().width, width / ratio * cfg.ScreenWidth / img.get().height);
 				}
-				ReadNextString(buf, nextScene);
+				ReadNextStateTag(buf, nextScene);
 				if (buf == "Center")
 				{
 					x = (relativeX * cfg.ScreenWidth - img.get().width * scale / 2);
@@ -553,9 +947,9 @@ namespace visualnovel
 					x = relativeX * cfg.ScreenWidth;
 					y = relativeY * cfg.ScreenHeight;
 				}
-				ReadNextNumber(buf, nextScene);
+				int layerDepth = (int)int(GetNumber(nextScene, ')'));
 				idList.push_back(world.getEntityManager()->getId());
-				world.createUnit(idList.back(), ui::ImageBoxExCom{ Vector2{x, y} + cfg.drawOffset, scale, img, std::stoi(buf) });
+				world.createUnit(idList.back(), ui::ImageBoxExCom{ Vector2{x, y} + cfg.drawOffset, scale, img, layerDepth });
 
 				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
 				++nextScene;
@@ -575,7 +969,8 @@ namespace visualnovel
 		{
 			idList.push_back(world.getEntityManager()->getId());
 			auto it = viewer.find(targetList.back());
-			world.createUnit(idList.back(), visualnovel::TextSceneCom{ exIdList.back(), viewer[targetList.back()]});
+			SceneView view{ sceneName, SceneView::SceneType::TYPE_TEXTSCENE, textTmp };
+			world.createUnit(idList.back(), visualnovel::TextSceneCom{ exIdList.back(), viewer[targetList.back()], view});
 		}
 		else if (sceneType == "SelectScene")
 		{
