@@ -23,6 +23,8 @@ extern "C" {
 	// 清理触摸资源
 	void CloseTouchEx();
 
+	char* LoadANSI(const char* utf8, int length);
+	void UnloadANSI(char* ansi);
 #ifdef __cplusplus
 }
 #endif
@@ -57,5 +59,18 @@ static inline bool InitTouch()
 static inline bool IsTouchSupported()
 {
 	return true; //no uesd
+}
+
+char* LoadANSI(const char* utf8, int length)
+{
+	char* p = new char[length + 1];
+	p[length] = '\0';
+	memcpy(p, utf8, length);
+	return p;
+}
+
+static inline void UnloadANSI(char* ansi)
+{
+	delete[] ansi;
 }
 #endif //_WIN32

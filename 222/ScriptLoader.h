@@ -138,7 +138,6 @@ namespace visualnovel
 
 	private:
 		ecs::World2D& world;
-		//rlRAII::FileRAII script;
 		ScriptData script;
 		visualnovel::VisualNovelConfig& cfg;
 
@@ -150,6 +149,8 @@ namespace visualnovel
 
 		std::vector<std::string> StringStorage;
 		std::vector<double> NumberStorage;
+
+		std::string beginScene;
 
 		enum class VarType : uint8_t
 		{
@@ -316,7 +317,7 @@ namespace visualnovel
 
 		void SkipSpaceUntil(rlRAII::FileRAII::Iterator& ptr, unsigned char stop)
 		{
-			while (!ptr.eof() && *ptr != stop && std::isspace(static_cast<unsigned char>(*ptr)))
+			while (!ptr.eof() && *ptr != stop && std::isspace(*ptr))
 				++ptr;
 		}
 
@@ -343,15 +344,6 @@ namespace visualnovel
 					++ptr;
 					SkipSpaceUntil(ptr, stop);
 					if (ptr.eof() || *ptr == stop) return 0.0;
-
-					//std::string indexBuf;
-					//while (!ptr.eof() && *ptr != stop && std::isdigit(static_cast<unsigned char>(*ptr)))
-					//{
-					//	indexBuf += *ptr;
-					//	++ptr;
-					//}
-					//if (!indexBuf.empty())
-					//	index = static_cast<int32_t>(std::stoi(indexBuf));
 					index = (int)round(f2(ptr, ']'));
 
 					SkipSpaceUntil(ptr, stop);
@@ -494,12 +486,22 @@ namespace visualnovel
 	public:
 		ScriptLoader(ecs::World2D& world, const std::string& script, vn::VisualNovelConfig& cfg) : world(world), script(script.c_str()), cfg(cfg) {}
 
+		void start()
+		{
+			auto s = viewer.find(beginScene);
+			if (s != viewer.end())
+			{
+				loadScene(s->second);
+			}
+		}
+
 		std::future<void> load()
 		{
 			auto scriptPtr = script.begin();
-			//if (memcmp(scriptPtr.get(), "Global", 6)) return std::async(std::launch::deferred, []() {});
-			//while (*scriptPtr != '\n' && !scriptPtr.eof()) ++scriptPtr;
-			//++scriptPtr;
+			ScriptData scriptDataTmp;
+			if (memcmp(scriptPtr.get(), "Global", 6)) return std::async(std::launch::deferred, []() {});
+			while (*scriptPtr != '\n' && !scriptPtr.eof()) ++scriptPtr;
+			++scriptPtr;
 			while (memcmp(scriptPtr.get(), "Scene", 5) && !scriptPtr.eof())
 			{
 				if (!memcmp(scriptPtr.get(), "String", 6))
@@ -514,13 +516,15 @@ namespace visualnovel
 					}
 					SkipSpaceUntil(scriptPtr, '\n');
 					std::string varName;
-					while (!scriptPtr.eof() && *scriptPtr != '\n' && !isspace(*scriptPtr))
+					while (!scriptPtr.eof() && !isspace(*scriptPtr))
 					{
 						varName += *scriptPtr;
 						++scriptPtr;
 					}
 					StringStorage.resize(StringStorage.size() + length);
 					variables[varName] = VariableView{ VarType::Str, static_cast<uint32_t>(StringStorage.size() - length), static_cast<uint16_t>(length) };
+					while (*scriptPtr != '\n' && !scriptPtr.eof()) ++scriptPtr;
+					++scriptPtr;
 				}
 				else if (!memcmp(scriptPtr.get(), "Number", 6))
 				{
@@ -534,17 +538,45 @@ namespace visualnovel
 					}
 					SkipSpaceUntil(scriptPtr, '\n');
 					std::string varName;
-					while (!scriptPtr.eof() && *scriptPtr != '\n' && !isspace(*scriptPtr))
+					while (!scriptPtr.eof() && !isspace(*scriptPtr))
 					{
 						varName += *scriptPtr;
 						++scriptPtr;
 					}
 					NumberStorage.resize(NumberStorage.size() + length);
 					variables[varName] = VariableView{ VarType::Num, static_cast<uint32_t>(NumberStorage.size() - length), static_cast<uint16_t>(length) };
+					while (*scriptPtr != '\n' && !scriptPtr.eof()) ++scriptPtr;
+					++scriptPtr;
 				}
-				//else if
-				++scriptPtr;
+				else if (!memcmp(scriptPtr.get(), "include", 7))
+				{
+					scriptPtr += 7;
+					SkipSpaceUntil(scriptPtr, '(');
+					++scriptPtr;
+					std::string scPath;
+					scPath = GetString(scriptPtr);
+					char* ANSIPath = LoadANSI(scPath.c_str(), scPath.size());
+					ScriptData tmp(ANSIPath);
+					UnloadANSI(ANSIPath);
+					scriptDataTmp += std::move(tmp);
+					while (*scriptPtr != '\n' && !scriptPtr.eof()) ++scriptPtr;
+					++scriptPtr;
+				}
+				else if (!memcmp(scriptPtr.get(), "Begin", 5))
+				{
+					scriptPtr += 5;
+					SkipSpaceUntil(scriptPtr, '(');
+					++scriptPtr;
+					beginScene = GetString(scriptPtr);
+					while (*scriptPtr != '\n') ++scriptPtr;
+					++scriptPtr;
+				}
+				else
+				{
+					++scriptPtr;
+				}
 			}
+			script += scriptDataTmp;
 			return std::async(std::launch::async, [this]()
 				{
 					auto iter = script.begin();
@@ -917,7 +949,9 @@ namespace visualnovel
 			}
 			else if (!memcmp(nextScene.get(), "Image", 5) && (nextScene[5] == '(' || isspace(nextScene[5])))
 			{
-				nextScene += 6;
+				nextScene += 5;
+				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
+				++nextScene;
 				float relativeX, relativeY, ratio, width, scale, x, y;
 				rlRAII::Texture2DRAII img;
 				std::string buf;
@@ -953,6 +987,172 @@ namespace visualnovel
 
 				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
 				++nextScene;
+			}
+			else if (!memcmp(nextScene.get(), "SetStr", 6))
+			{
+				nextScene += 6;
+				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				std::string varName;
+				while (*nextScene != '$' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				while (!isspace(*nextScene) && !nextScene.eof() && *nextScene != ',' && *nextScene != '[')
+				{
+					varName += *nextScene;
+					++nextScene;
+				}
+				int idx = 0;
+				if (*nextScene == '[')
+				{
+					++nextScene;
+					idx = (int)round(GetNumber(nextScene, ']'));
+					--nextScene;//GetNumber会跳过','，这里为了匹配通用跳跃逻辑
+				}
+				while (!nextScene.eof() && *nextScene != ',') ++nextScene;
+				++nextScene;
+				std::string value = GetString(nextScene);
+				if (varName != "TARGET_LIST" && varName != "TEXTBOX_BACKGROUND" && varName != "CHR_NAME_BACKGROUND")
+				{
+					auto varRef = GetVariable(varName);
+					if (varRef.type == VarType::Str && varRef.length > 0)
+					{
+						StringStorage[varRef.offset + idx] = value;
+					}
+				}
+				else
+				{
+					if (varName == "TARGET_LIST" && idx < targetList.size())
+					{
+						targetList[idx] = value;
+					}
+					
+				}
+				
+				while (!nextScene.eof() && *nextScene != '\n') ++nextScene;
+				++nextScene;
+
+			}
+			else if (!memcmp(nextScene.get(), "SetNum", 6))
+			{
+				nextScene += 6;
+				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				std::string varName;
+				while (*nextScene != '$' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				while (!isspace(*nextScene) && !nextScene.eof() && *nextScene != ',' && *nextScene != '[')
+				{
+					varName += *nextScene;
+					++nextScene;
+				}
+				int idx = 0;
+				if (*nextScene == '[')
+				{
+					++nextScene;
+					idx = (int)round(GetNumber(nextScene, ']'));
+					while (*nextScene != ']' && !nextScene.eof()) ++nextScene;
+					++nextScene;
+				}
+				while (!nextScene.eof() && *nextScene != ',') ++nextScene;
+				++nextScene;
+				double value = GetNumber(nextScene, ')');
+				auto varRef = GetVariable(varName);
+				if (varRef.type == VarType::Num && varRef.length > 0)
+				{
+					NumberStorage[varRef.offset + idx] = value;
+				}
+				while (!nextScene.eof() && *nextScene != '\n') ++nextScene;
+				++nextScene;
+			}
+			else if (!memcmp(nextScene.get(), "if", 2))
+			{
+				nextScene += 2;
+				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				double var0 = f2(nextScene, ')');
+				bool cond = false;
+				SkipSpaceUntil(nextScene, ')');
+				if (*nextScene == '<')
+				{
+					if (nextScene[1] == '=')
+					{
+						nextScene += 2;
+						cond = (var0 <= f2(nextScene, ')'));
+					}
+					else
+					{
+						nextScene += 1;
+						cond = (var0 < f2(nextScene, ')'));
+					}
+				}
+				else if (*nextScene == '>')
+				{
+					if (nextScene[1] == '=')
+					{
+						nextScene += 2;
+						cond = (var0 >= f2(nextScene, ')'));
+					}
+					else
+					{
+						nextScene += 1;
+						cond = (var0 > f2(nextScene, ')'));
+					}
+				}
+				else if (*nextScene == '=')
+				{
+					if (nextScene[1] == '=')
+					{
+						nextScene += 2;
+						cond = (var0 == f2(nextScene, ')'));
+					}
+				}
+				else if (*nextScene == '!')
+				{
+					if (nextScene[1] == '=')
+					{
+						nextScene += 2;
+						cond = (var0 != f2(nextScene, ')'));
+					}
+				}
+				else
+				{
+					cond = false;
+				}
+				if (cond)
+				{
+					while (*nextScene != '{' && !nextScene.eof()) ++nextScene;
+					++nextScene;
+				}
+				else
+				{
+					while (*nextScene != '{' && !nextScene.eof()) ++nextScene;
+					++nextScene;
+					int braceCount = 1;
+					while (!nextScene.eof() && braceCount > 0)
+					{
+						if (*nextScene == '{') ++braceCount;
+						else if (*nextScene == '}') --braceCount;
+						else if (*nextScene == '(')
+						{
+							int braceCount2 = 1;
+							++nextScene;
+							while (!nextScene.eof() && braceCount2 > 0)
+							{
+								if (*nextScene == '(') ++braceCount2;
+								else if (*nextScene == ')') --braceCount2;
+								++nextScene;
+							}
+						}
+						else if (*nextScene == '/')
+						{
+							if (nextScene[1] == '/')
+							{
+								while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
+							}
+						}
+						++nextScene;
+					}
+				}
 			}
 			else if (!memcmp(nextScene.get(), "//", 2))
 			{

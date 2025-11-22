@@ -742,7 +742,7 @@ int main()
 	vn::ApplyScriptLoader(main, scLoader, CFG);
 	
 	task.get();
-	scLoader.loadScene(sc.begin());
+	scLoader.start();
 
 	while (!WindowShouldClose())
 	{
