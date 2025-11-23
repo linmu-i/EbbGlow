@@ -1,9 +1,7 @@
 #pragma once
 
 #include <fstream>
-#include <sstream>
 #include <future>
-#include <variant>
 
 #include "ECS.h"
 #include "World.h"
@@ -157,6 +155,11 @@ namespace visualnovel
 			Str,
 			Num
 		};
+		enum class BackgroundDrawType : uint8_t
+		{
+			Contain,
+			Cover
+		};
 
 		struct VariableView
 		{
@@ -164,27 +167,10 @@ namespace visualnovel
 			uint32_t offset;
 			uint16_t length;
 		};
-
 		std::unordered_map<std::string, VariableView> variables;
 
-		VariableView GetVariable(const std::string& name)
-		{
-			auto it = variables.find(name);
-			if (it != variables.end())
-			{
-				return it->second;
-			}
-			else
-			{
-				return VariableView{ VarType::Num, 0, 0 };
-			}
-		}
+		
 
-		enum class BackgroundDrawType : uint8_t
-		{
-			Contain,
-			Cover
-		};
 		void CreateTextScene(const std::vector<std::string>& languages, ecs::entity textBoxId, rlRAII::Texture2DRAII backGround, bool read, BackgroundDrawType drawType)
 		{
 			world.createUnit(textBoxId, vn::StandardTextBox
@@ -240,79 +226,6 @@ namespace visualnovel
 				idList.push_back(idMgr->getId());
 				world.createUnit(idList.back(), ui::ImageBoxExCom({ Vector2{ (cfg.ScreenWidth - cfg.textBoxBackGround.get().width * scale) / 2, cfg.ScreenHeight * (0.75f - 0.03125f)} + cfg.drawOffset, scale, cfg.textBoxBackGround, cfg.textBoxBackGroundLayer}));
 			}
-		}
-
-
-		void ReadNextString(std::string& textBuf, rlRAII::FileRAII::Iterator& nextScene)
-		{
-			textBuf.clear();
-			while (*nextScene != '"' && *nextScene != '$' && !nextScene.eof()) ++nextScene;
-			if (*nextScene == '$')
-			{
-				++nextScene;
-				std::string varName;
-				while (!isspace(*nextScene) && *nextScene != '[' && !nextScene.eof())
-				{
-					varName += *nextScene;
-					++nextScene;
-				}
-				int32_t index = 0;
-				if (*nextScene == '[')
-				{
-					++nextScene;
-					std::string indexBuf;
-					while (*nextScene != ']' && !nextScene.eof())
-					{
-						indexBuf += *nextScene;
-						++nextScene;
-					}
-					if (!indexBuf.empty())
-						index = static_cast<int32_t>(std::stoi(indexBuf));
-					if (*nextScene == ']')
-						++nextScene;
-				}
-				auto varView = GetVariable(varName);
-				if (varView.length != 0 && varView.type == VarType::Str)
-				{
-					if (index >= 0 && index < varView.length)
-					{
-						textBuf = StringStorage[varView.offset + index];
-					}
-				}
-				else
-				{
-					textBuf = "";
-				}
-				return;
-			}
-			++nextScene;
-			while (*nextScene != '"' && !nextScene.eof())
-			{
-				if (*nextScene == '\\' && nextScene.position() < nextScene.size() - 1)
-				{
-					textBuf += nextScene[1];
-					nextScene += 2;
-				}
-				else
-				{
-					textBuf += *nextScene;
-					++nextScene;
-				}
-			}
-			++nextScene;
-		};
-
-		std::string GetString(rlRAII::FileRAII::Iterator& nextScene)
-		{
-			std::string result;
-			std::string buf;
-			while (*nextScene != ')' && *nextScene != ',' && !nextScene.eof())
-			{
-				ReadNextString(buf, nextScene);
-				result += buf;
-			}
-			++nextScene;
-			return result;
 		}
 
 		void SkipSpaceUntil(rlRAII::FileRAII::Iterator& ptr, unsigned char stop)
@@ -396,7 +309,6 @@ namespace visualnovel
 
 			return 0.0;
 		}
-
 		double f1(rlRAII::FileRAII::Iterator& ptr, unsigned char stop)
 		{
 			double result = f0(ptr, stop);
@@ -423,7 +335,6 @@ namespace visualnovel
 			}
 			return result;
 		}
-
 		double f2(rlRAII::FileRAII::Iterator& ptr, unsigned char stop)
 		{
 			double result = f1(ptr, stop);
@@ -449,13 +360,6 @@ namespace visualnovel
 			return result;
 		}
 
-		double GetNumber(rlRAII::FileRAII::Iterator& nextScene, unsigned char stop)
-		{
-			double result = f2(nextScene, stop);
-			while ((*nextScene != ',' && *nextScene != ')') && !nextScene.eof()) ++nextScene;
-			++nextScene;
-			return result;
-		}
 		void ReadNextNumber(std::string& textBuf, rlRAII::FileRAII::Iterator& nextScene)
 		{
 			textBuf.clear();
@@ -481,6 +385,570 @@ namespace visualnovel
 			}
 			while ((*nextScene != ',' && *nextScene != ')') && !nextScene.eof()) ++nextScene;
 			++nextScene;
+		}
+		void ReadNextString(std::string& textBuf, rlRAII::FileRAII::Iterator& nextScene)
+		{
+			textBuf.clear();
+			while (*nextScene != '"' && *nextScene != '$' && !nextScene.eof()) ++nextScene;
+			if (*nextScene == '$')
+			{
+				++nextScene;
+				std::string varName;
+				while (!isspace(*nextScene) && *nextScene != '[' && !nextScene.eof())
+				{
+					varName += *nextScene;
+					++nextScene;
+				}
+				int32_t index = 0;
+				if (*nextScene == '[')
+				{
+					++nextScene;
+					std::string indexBuf;
+					while (*nextScene != ']' && !nextScene.eof())
+					{
+						indexBuf += *nextScene;
+						++nextScene;
+					}
+					if (!indexBuf.empty())
+						index = static_cast<int32_t>(std::stoi(indexBuf));
+					if (*nextScene == ']')
+						++nextScene;
+				}
+				auto varView = GetVariable(varName);
+				if (varView.length != 0 && varView.type == VarType::Str)
+				{
+					if (index >= 0 && index < varView.length)
+					{
+						textBuf = StringStorage[varView.offset + index];
+					}
+				}
+				else
+				{
+					textBuf = "";
+				}
+				return;
+			}
+			++nextScene;
+			while (*nextScene != '"' && !nextScene.eof())
+			{
+				if (*nextScene == '\\' && nextScene.position() < nextScene.size() - 1)
+				{
+					textBuf += nextScene[1];
+					nextScene += 2;
+				}
+				else
+				{
+					textBuf += *nextScene;
+					++nextScene;
+				}
+			}
+			++nextScene;
+		};
+
+		std::string GetString(rlRAII::FileRAII::Iterator& nextScene)
+		{
+			std::string result;
+			std::string buf;
+			while (*nextScene != ')' && *nextScene != ',' && !nextScene.eof())
+			{
+				ReadNextString(buf, nextScene);
+				result += buf;
+			}
+			++nextScene;
+			return result;
+		}
+		double GetNumber(rlRAII::FileRAII::Iterator& nextScene, unsigned char stop)
+		{
+			double result = f2(nextScene, stop);
+			while ((*nextScene != ',' && *nextScene != ')') && !nextScene.eof()) ++nextScene;
+			++nextScene;
+			return result;
+		}
+		VariableView GetVariable(const std::string& name)
+		{
+			auto it = variables.find(name);
+			if (it != variables.end())
+			{
+				return it->second;
+			}
+			else
+			{
+				return VariableView{ VarType::Num, 0, 0 };
+			}
+		}
+
+		void LoadSceneInfo(rlRAII::FileRAII::Iterator& nextScene, std::string& sceneName, std::string& sceneType, std::vector<std::string>& argsList)
+		{
+			std::string targetTmp;
+			while (memcmp(nextScene.get(), "Scene", 5)) ++nextScene;
+			nextScene += 5;
+			while (isspace(*nextScene) && !nextScene.eof()) ++nextScene;
+			while (*nextScene != '(' && !isspace(*nextScene) && !nextScene.eof())
+			{
+				sceneName += *nextScene;
+				++nextScene;
+			}
+			++nextScene;
+			while (*nextScene != ':' && !nextScene.eof())
+			{
+				if (!isspace(*nextScene))
+				{
+					sceneType += *nextScene;
+				}
+				++nextScene;
+			}
+			++nextScene;
+			while (*nextScene != ')' && !nextScene.eof())
+			{
+				if (!isspace(*nextScene) && *nextScene != ',')
+				{
+					targetTmp += *nextScene;
+				}
+				if (*nextScene == ',')
+				{
+					argsList.push_back(targetTmp);
+					targetTmp.clear();
+				}
+				++nextScene;
+			}
+			argsList.push_back(targetTmp);
+			while (*nextScene != '\n' && !nextScene.eof())	++nextScene;
+			++nextScene;
+		}
+		void LoadFunction(rlRAII::FileRAII::Iterator& nextScene, std::string& sceneName, std::string& sceneType, std::string& textTmp, std::vector<std::string> argsList)
+		{
+			if (!memcmp(nextScene.get(), "TextScene", 9) && (nextScene[9] == '(' || isspace(nextScene[9])))
+			{
+				std::string textBuf;
+				std::vector<std::string> texts;
+				std::string bg;
+				nextScene += 10;
+				textBuf = GetString(nextScene);
+				texts.push_back(textBuf);
+				textBuf = GetString(nextScene);
+				texts.push_back(textBuf);
+				textBuf = GetString(nextScene);
+				texts.push_back(textBuf);
+				textBuf = GetString(nextScene);
+				texts.push_back(textBuf);
+				textBuf = GetString(nextScene);
+				bg = textBuf;
+				ReadNextStateTag(textBuf, nextScene);
+				auto readIt = cfg.readTextSet.find(sceneName);
+				BackgroundDrawType bgType;
+				textTmp = texts[cfg.mainLanguage];
+				if (textBuf == "Cover")
+				{
+					bgType = BackgroundDrawType::Cover;
+				}
+				else
+				{
+					bgType = BackgroundDrawType::Contain;
+				}
+				if (sceneType == "TextScene")
+				{
+					exIdList.push_back(world.getEntityManager()->getId());
+					CreateTextScene(texts, exIdList.back(), rlRAII::Texture2DRAII(bg.c_str()), readIt == cfg.readTextSet.end(), bgType);
+				}
+				else
+				{
+					auto idmgr = world.getEntityManager();
+					idList.push_back(idmgr->getId());
+					CreateTextScene(texts, idList.back(), rlRAII::Texture2DRAII(bg.c_str()), readIt == cfg.readTextSet.end(), bgType);
+				}
+				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+			}
+			else if (!memcmp(nextScene.get(), "Chr", 3) && (nextScene[3] == '(' || isspace(nextScene[3])))
+			{
+				nextScene += 4;
+				std::string nameBuf;
+				nameBuf = GetString(nextScene);//ReadNextString(nameBuf, nextScene);
+
+				int offsetX = cfg.ScreenWidth * (1.0f / 12.0f);
+				int offsetY = cfg.ScreenHeight * 0.0625;
+				int x = offsetX * 1.5f;
+				int y = cfg.ScreenHeight * 0.75f - offsetY;
+				int textOffsetX = cfg.chrNameOffsetX * offsetX;
+				if (cfg.chrNameBackGround.valid())
+				{
+					idList.push_back(world.getEntityManager()->getId());
+					float scale = static_cast<float>(offsetY) / static_cast<float>(cfg.chrNameBackGround.get().height);
+					world.createUnit(idList.back(), ui::ImageBoxExCom({ Vector2{ static_cast<float>(x), static_cast<float>(y) } + cfg.drawOffset, scale, cfg.chrNameBackGround, cfg.textBoxLayer }));
+				}
+
+				idList.push_back(world.getEntityManager()->getId());
+				world.createUnit(idList.back(), ui::TextBoxExCom{ cfg.fontData, nameBuf, Vector2{float(x + textOffsetX), float(y)} + cfg.drawOffset, WHITE, cfg.textBoxLayer, float(cfg.textSize), 0.1f * cfg.textSize });
+				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+			}
+			else if (!memcmp(nextScene.get(), "Button", 6) && (nextScene[6] == '(' || isspace(nextScene[6])))
+			{
+				nextScene += 6;
+				while (*nextScene != '(') ++nextScene;
+				++nextScene;
+				float relativeX, relativeY, ratio, width;
+				std::vector<std::string> languages;
+				std::string buf;
+				std::string alignment;
+				Color textColor;
+				rlRAII::Texture2DRAII normalImg;
+				rlRAII::Texture2DRAII hoverImg;
+				rlRAII::Texture2DRAII pressImg;
+				relativeX = GetNumber(nextScene, ',');
+				relativeY = GetNumber(nextScene, ',');
+				ratio = GetNumber(nextScene, ',');
+				width = GetNumber(nextScene, ',');
+
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
+				languages.push_back(buf);
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
+				languages.push_back(buf);
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
+				languages.push_back(buf);
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
+				languages.push_back(buf);
+
+				ReadNextStateTag(alignment, nextScene);
+
+				ReadNextNumber(buf, nextScene);
+				textColor.r = std::stoi(buf);
+				ReadNextNumber(buf, nextScene);
+				textColor.g = std::stoi(buf);
+				ReadNextNumber(buf, nextScene);
+				textColor.b = std::stoi(buf);
+				ReadNextNumber(buf, nextScene);
+				textColor.a = std::stoi(buf);
+
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
+				normalImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
+				hoverImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
+				pressImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
+
+				float offsetX = cfg.ScreenWidth * relativeX, offsetY = cfg.ScreenHeight * relativeY;
+				float height = width / ratio;
+				if (alignment == "Center")
+				{
+					offsetX -= (width * cfg.ScreenWidth) / 2.0f;
+					offsetY -= (height * cfg.ScreenHeight) / 2.0f;
+				}
+
+
+				if (sceneType == "SelectScene")
+				{
+					exIdList.push_back(world.getEntityManager()->getId());
+					SetTextureFilter(normalImg.get(), RL_TEXTURE_FILTER_BILINEAR);
+					SetTextureFilter(hoverImg.get(), RL_TEXTURE_FILTER_BILINEAR);
+					SetTextureFilter(pressImg.get(), RL_TEXTURE_FILTER_BILINEAR);
+					world.createUnit(exIdList.back(), ui::ButtonExCom
+						{
+							cfg.fontData,
+							normalImg,
+							hoverImg,
+							pressImg,
+							languages[cfg.uiLanguage],
+							textColor,
+							cfg.textSize,
+							int(cfg.textSize * 0.1),
+							Vector2{ offsetX, offsetY } + cfg.drawOffset,
+							Vector2{ width * cfg.ScreenWidth, height * cfg.ScreenWidth },
+							cfg.ButtonLayer,
+							(width * cfg.ScreenWidth) / normalImg.get().width
+						});
+					world.getMessageManager()->subscribe(exIdList.back());
+				}
+				else
+				{
+					idList.push_back(world.getEntityManager()->getId());
+					SetTextureFilter(normalImg.get(), RL_TEXTURE_FILTER_BILINEAR);
+					SetTextureFilter(hoverImg.get(), RL_TEXTURE_FILTER_BILINEAR);
+					SetTextureFilter(pressImg.get(), RL_TEXTURE_FILTER_BILINEAR);
+					world.createUnit(idList.back(), ui::ButtonExCom
+						{
+							cfg.fontData,
+							normalImg,
+							hoverImg,
+							pressImg,
+							languages[cfg.uiLanguage],
+							textColor,
+							cfg.textSize,
+							int(cfg.textSize * 0.1),
+							Vector2{ offsetX, offsetY } + cfg.drawOffset,
+							Vector2{ width * cfg.ScreenWidth, height * cfg.ScreenWidth },
+							cfg.ButtonLayer,
+							(width * cfg.ScreenWidth) / normalImg.get().width
+						});
+					world.getMessageManager()->subscribe(idList.back());
+				}
+
+				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+			}
+			else if (!memcmp(nextScene.get(), "Image", 5) && (nextScene[5] == '(' || isspace(nextScene[5])))
+			{
+				nextScene += 5;
+				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				float relativeX, relativeY, ratio, width, scale, x, y;
+				rlRAII::Texture2DRAII img;
+				std::string buf;
+				relativeX = GetNumber(nextScene, ',');
+				relativeY = GetNumber(nextScene, ',');
+				ratio = GetNumber(nextScene, ',');
+				width = GetNumber(nextScene, ',');
+				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
+				img = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
+				ReadNextStateTag(buf, nextScene);
+				if (buf == "Cover")
+				{
+					scale = std::max(width * cfg.ScreenWidth / img.get().width, width / ratio * cfg.ScreenWidth / img.get().height);
+				}
+				else
+				{
+					scale = std::min(width * cfg.ScreenWidth / img.get().width, width / ratio * cfg.ScreenWidth / img.get().height);
+				}
+				ReadNextStateTag(buf, nextScene);
+				if (buf == "Center")
+				{
+					x = (relativeX * cfg.ScreenWidth - img.get().width * scale / 2);
+					y = (relativeY * cfg.ScreenHeight - img.get().height * scale / 2);
+				}
+				else
+				{
+					x = relativeX * cfg.ScreenWidth;
+					y = relativeY * cfg.ScreenHeight;
+				}
+				int layerDepth = (int)int(GetNumber(nextScene, ')'));
+				idList.push_back(world.getEntityManager()->getId());
+				world.createUnit(idList.back(), ui::ImageBoxExCom{ Vector2{x, y} + cfg.drawOffset, scale, img, layerDepth });
+
+				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+			}
+			else if (!memcmp(nextScene.get(), "SetStr", 6) && (nextScene[6] == '(' || isspace(nextScene[6])))
+			{
+				nextScene += 6;
+				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				std::string varName;
+				while (*nextScene != '$' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				while (!isspace(*nextScene) && !nextScene.eof() && *nextScene != ',' && *nextScene != '[')
+				{
+					varName += *nextScene;
+					++nextScene;
+				}
+				int idx = 0;
+				if (*nextScene == '[')
+				{
+					++nextScene;
+					idx = (int)round(GetNumber(nextScene, ']'));
+					--nextScene;//GetNumber会跳过','，这里为了匹配通用跳跃逻辑
+				}
+				while (!nextScene.eof() && *nextScene != ',') ++nextScene;
+				++nextScene;
+				std::string value = GetString(nextScene);
+				if (varName != "TARGET_LIST" && varName != "TEXTBOX_BACKGROUND" && varName != "CHR_NAME_BACKGROUND")
+				{
+					auto varRef = GetVariable(varName);
+					if (varRef.type == VarType::Str && varRef.length > 0)
+					{
+						StringStorage[varRef.offset + idx] = value;
+					}
+				}
+				else
+				{
+					if (varName == "TARGET_LIST" && idx < argsList.size())
+					{
+						argsList[idx] = value;
+					}
+
+				}
+
+				while (!nextScene.eof() && *nextScene != '\n') ++nextScene;
+				++nextScene;
+
+			}
+			else if (!memcmp(nextScene.get(), "SetNum", 6) && (nextScene[6] == '(' || isspace(nextScene[6])))
+			{
+				nextScene += 6;
+				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				std::string varName;
+				while (*nextScene != '$' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				while (!isspace(*nextScene) && !nextScene.eof() && *nextScene != ',' && *nextScene != '[')
+				{
+					varName += *nextScene;
+					++nextScene;
+				}
+				int idx = 0;
+				if (*nextScene == '[')
+				{
+					++nextScene;
+					idx = (int)round(GetNumber(nextScene, ']'));
+					while (*nextScene != ']' && !nextScene.eof()) ++nextScene;
+					++nextScene;
+				}
+				while (!nextScene.eof() && *nextScene != ',') ++nextScene;
+				++nextScene;
+				double value = GetNumber(nextScene, ')');
+				auto varRef = GetVariable(varName);
+				if (varRef.type == VarType::Num && varRef.length > 0)
+				{
+					NumberStorage[varRef.offset + idx] = value;
+				}
+				while (!nextScene.eof() && *nextScene != '\n') ++nextScene;
+				++nextScene;
+			}
+			else if (!memcmp(nextScene.get(), "if", 2) && (nextScene[2] == '(' || isspace(nextScene[2])))
+			{
+				nextScene += 2;
+				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				double var0 = f2(nextScene, ')');
+				bool cond = false;
+				SkipSpaceUntil(nextScene, ')');
+				if (*nextScene == '<')
+				{
+					if (nextScene[1] == '=')
+					{
+						nextScene += 2;
+						cond = (var0 <= f2(nextScene, ')'));
+					}
+					else
+					{
+						nextScene += 1;
+						cond = (var0 < f2(nextScene, ')'));
+					}
+				}
+				else if (*nextScene == '>')
+				{
+					if (nextScene[1] == '=')
+					{
+						nextScene += 2;
+						cond = (var0 >= f2(nextScene, ')'));
+					}
+					else
+					{
+						nextScene += 1;
+						cond = (var0 > f2(nextScene, ')'));
+					}
+				}
+				else if (*nextScene == '=')
+				{
+					if (nextScene[1] == '=')
+					{
+						nextScene += 2;
+						cond = (var0 == f2(nextScene, ')'));
+					}
+				}
+				else if (*nextScene == '!')
+				{
+					if (nextScene[1] == '=')
+					{
+						nextScene += 2;
+						cond = (var0 != f2(nextScene, ')'));
+					}
+				}
+				else
+				{
+					cond = false;
+				}
+				if (cond)
+				{
+					while (*nextScene != '{' && !nextScene.eof()) ++nextScene;
+					++nextScene;
+				}
+				else
+				{
+					while (*nextScene != '{' && !nextScene.eof()) ++nextScene;
+					++nextScene;
+					int braceCount = 1;
+					while (!nextScene.eof() && braceCount > 0)
+					{
+						if (*nextScene == '{') ++braceCount;
+						else if (*nextScene == '}') --braceCount;
+						else if (*nextScene == '(')
+						{
+							int braceCount2 = 1;
+							++nextScene;
+							while (!nextScene.eof() && braceCount2 > 0)
+							{
+								if (*nextScene == '(') ++braceCount2;
+								else if (*nextScene == ')') --braceCount2;
+								++nextScene;
+							}
+						}
+						else if (*nextScene == '/')
+						{
+							if (nextScene[1] == '/')
+							{
+								while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
+							}
+						}
+						++nextScene;
+					}
+				}
+			}
+			else if (!memcmp(nextScene.get(), "TextBox", 7) && (nextScene[7] == '(' || isspace(nextScene[7])))
+			{
+				nextScene += 7;
+				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				double relativeX, relativeY, textRelativeSize, r, g, b, a, layerDepth;
+				relativeX = GetNumber(nextScene, ')');
+				relativeY = GetNumber(nextScene, ')');
+				textRelativeSize = GetNumber(nextScene, ')');
+				textRelativeSize *= std::min(cfg.ScreenWidth / 1920.0f, cfg.ScreenHeight / 1080.0f);
+				int offsetX = cfg.ScreenWidth * relativeX;
+				int offsetY = cfg.ScreenHeight * relativeY;
+				std::string text = GetString(nextScene);
+				r = GetNumber(nextScene, ')');
+				g = GetNumber(nextScene, ')');
+				b = GetNumber(nextScene, ')');
+				a = GetNumber(nextScene, ')');
+				std::string fontPath = GetString(nextScene);
+				rlRAII::FileRAII fontFile;
+				if (fontPath.empty())
+				{
+					fontFile = cfg.fontData;
+				}
+				else
+				{
+					fontFile = rlRAII::FileRAII(fontPath.c_str());
+					if (!fontFile.valid())
+					{
+						fontFile = cfg.fontData;
+					}
+				}
+				layerDepth = GetNumber(nextScene, ')');
+				std::string state;
+				ReadNextStateTag(state, nextScene);
+				rlRAII::FontRAII font = DynamicLoadFontFromMemory(text.c_str(), cfg.fontData.fileName(), cfg.fontData.get(), cfg.fontData.size(), static_cast<int>(textRelativeSize));
+				if (state == "Center")
+				{
+					Vector2 cover = MeasureTextEx(font.get(), text.c_str(), float(textRelativeSize), float(textRelativeSize) * 0.1f);
+					idList.push_back(world.getEntityManager()->getId());
+					world.createUnit(idList.back(), ui::TextBoxExCom{ fontFile, text, Vector2{ float(offsetX) - cover.x / 2.0f, float(offsetY) - cover.y / 2.0f } + cfg.drawOffset, Color{uint8_t(r), uint8_t(g), uint8_t(b), uint8_t(a)}, (int)round(layerDepth), float(textRelativeSize), float(textRelativeSize) * 0.1f });
+				}
+				else
+				{
+					idList.push_back(world.getEntityManager()->getId());
+					world.createUnit(idList.back(), ui::TextBoxExCom{ fontFile, text, Vector2{ float(offsetX), float(offsetY) } + cfg.drawOffset, Color{uint8_t(r), uint8_t(g), uint8_t(b), uint8_t(a)}, (int)round(layerDepth), float(textRelativeSize), float(textRelativeSize) * 0.1f });
+				}
+			}
+			else if (!memcmp(nextScene.get(), "//", 2))
+			{
+				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+			}
+			else
+			{
+				++nextScene;
+			}
 		}
 
 	public:
@@ -627,15 +1095,14 @@ namespace visualnovel
 		ecs::DoubleComs<ui::ButtonExCom>* buttonComs;
 		ecs::DoubleComs<StandardTextBox>* textBoxComs;
 		ScriptLoader* scLoader;
-		VisualNovelConfig* cfg;
 		std::string nextSceneName;
 		bool clicked = false;
 
 		ecs::MessageTypeId pressMsgId;
 
 	public:
-		TextSceneSystem(ecs::World2D& world, VisualNovelConfig& cfg, ScriptLoader& scLoader) :
-			world(&world), cfg(&cfg), coms(world.getDoubleBuffer<TextSceneCom>()), buttonComs(world.getDoubleBuffer<ui::ButtonExCom>()),
+		TextSceneSystem(ecs::World2D& world, ScriptLoader& scLoader) :
+			world(&world), coms(world.getDoubleBuffer<TextSceneCom>()), buttonComs(world.getDoubleBuffer<ui::ButtonExCom>()),
 			clicked(false), textBoxComs(world.getDoubleBuffer<StandardTextBox>()), scLoader(&scLoader),
 			pressMsgId(world.getMessageManager()->getMessageTypeManager().getId<ui::ButtonPressMsg>()){}
 
@@ -698,13 +1165,12 @@ namespace visualnovel
 		ecs::World2D* world;
 		ecs::DoubleComs<SelectSceneCom>* coms;
 		ScriptLoader* scLoader;
-		VisualNovelConfig* cfg;
 
 		ecs::MessageTypeId pressMsgId = world->getMessageManager()->getMessageTypeManager().getId<ui::ButtonReleaseMsg>();
 
 	public:
-		SelectSceneSystem(ecs::World2D& world, VisualNovelConfig& cfg, ScriptLoader& scLoader) :
-			world(&world), cfg(&cfg), coms(world.getDoubleBuffer<SelectSceneCom>()), scLoader(&scLoader) {}
+		SelectSceneSystem(ecs::World2D& world, ScriptLoader& scLoader) :
+			world(&world), coms(world.getDoubleBuffer<SelectSceneCom>()), scLoader(&scLoader) {}
 
 		void update() override
 		{
@@ -726,6 +1192,40 @@ namespace visualnovel
 		}
 	};
 
+	struct DelaySceneCom
+	{
+		double delay;
+		double timeCount = 0;
+
+		rlRAII::FileRAII::Iterator targetScene;
+	};
+
+	class DelaySceneSystem : public ecs::SystemBase
+	{
+	private:
+		ecs::World2D* world;
+		ecs::DoubleComs<DelaySceneCom>* coms;
+
+		ScriptLoader* scLoader;
+
+	public:
+		DelaySceneSystem(ecs::World2D& world, ScriptLoader& scLoader) : world(&world), coms(world.getDoubleBuffer<DelaySceneCom>()), scLoader(&scLoader) {}
+
+		void update()
+		{
+			coms->active()->forEach([this](ecs::entity id, DelaySceneCom& activeCom)
+			{
+				auto& inactiveCom = *coms->inactive()->get(id);
+				if (activeCom.timeCount > activeCom.delay)
+				{
+					scLoader->loadScene(activeCom.targetScene);
+				}
+				inactiveCom = activeCom;
+				inactiveCom.timeCount += GetFrameTime() * 1000;//To ms
+			});
+		}
+	};
+
 	inline void ScriptLoader::loadScene(rlRAII::FileRAII::Iterator nextScene)
 	{
 		for (auto id : idList)
@@ -738,450 +1238,38 @@ namespace visualnovel
 			world.deleteUnit(id);
 		}
 		exIdList.clear();
-		nextScene += 5;
-		while (isspace(*nextScene) && !nextScene.eof()) ++nextScene;
 		std::string sceneName;
 		std::string sceneType;
 		std::string textTmp;
-		std::vector<std::string> targetList;
-		while (*nextScene != '(' && !isspace(*nextScene) && !nextScene.eof())
-		{
-			sceneName += *nextScene;
-			++nextScene;
-		}
-		++nextScene;
-		while (*nextScene != ':' && !nextScene.eof())
-		{
-			if (!isspace(*nextScene))
-			{
-				sceneType += *nextScene;
-			}
-			++nextScene;
-		}
-		++nextScene;
-		std::string targetTmp;
-		while (*nextScene != ')' && !nextScene.eof())
-		{
-			if (!isspace(*nextScene) && *nextScene != ',')
-			{
-				targetTmp += *nextScene;
-			}
-			if (*nextScene == ',')
-			{
-				targetList.push_back(targetTmp);
-				targetTmp.clear();
-			}
-			++nextScene;
-		}
-		targetList.push_back(targetTmp);
-		while (*nextScene != '\n' && !nextScene.eof())	++nextScene;
-		++nextScene;
+		std::vector<std::string> argsList;
+		LoadSceneInfo(nextScene, sceneName, sceneType, argsList);
 		while (memcmp(nextScene.get(), "Scene", 5) && !nextScene.eof())
 		{
-			if (!memcmp(nextScene.get(), "TextScene", 9) && (nextScene[9] == '(' || isspace(nextScene[9])))
-			{
-				std::string textBuf;
-				std::vector<std::string> texts;
-				std::string bg;
-				nextScene += 10;
-				textBuf = GetString(nextScene);//ReadNextString(textBuf, nextScene);
-				texts.push_back(textBuf);
-				textBuf = GetString(nextScene);//ReadNextString(textBuf, nextScene);
-				texts.push_back(textBuf);
-				textBuf = GetString(nextScene);//ReadNextString(textBuf, nextScene);
-				texts.push_back(textBuf);
-				textBuf = GetString(nextScene);//ReadNextString(textBuf, nextScene);
-				texts.push_back(textBuf);
-				textBuf = GetString(nextScene);//ReadNextString(textBuf, nextScene);
-				bg = textBuf;
-				ReadNextStateTag(textBuf, nextScene);
-				auto readIt = cfg.readTextSet.find(sceneName);
-				BackgroundDrawType bgType;
-				textTmp = texts[cfg.mainLanguage];
-				if (textBuf == "Cover")
-				{
-					bgType = BackgroundDrawType::Cover;
-				}
-				else
-				{
-					bgType = BackgroundDrawType::Contain;
-				}
-				if (sceneType == "TextScene")
-				{
-					exIdList.push_back(world.getEntityManager()->getId());
-					CreateTextScene(texts, exIdList.back(), rlRAII::Texture2DRAII(bg.c_str()), readIt == cfg.readTextSet.end(), bgType);
-				}
-				else
-				{
-					auto idmgr = world.getEntityManager();
-					idList.push_back(idmgr->getId());
-					CreateTextScene(texts, idList.back(), rlRAII::Texture2DRAII(bg.c_str()), readIt == cfg.readTextSet.end(), bgType);
-				}
-				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
-				++nextScene;
-			}
-			else if (!memcmp(nextScene.get(), "Chr", 3) && (nextScene[3] == '(' || isspace(nextScene[3])))
-			{
-				nextScene += 4;
-				std::string nameBuf;
-				nameBuf = GetString(nextScene);//ReadNextString(nameBuf, nextScene);
-
-				int offsetX = cfg.ScreenWidth * (1.0f / 12.0f);
-				int offsetY = cfg.ScreenHeight * 0.0625;
-				int x = offsetX * 1.5f;
-				int y = cfg.ScreenHeight * 0.75f - offsetY;
-				int textOffsetX = cfg.chrNameOffsetX * offsetX;
-				if (cfg.chrNameBackGround.valid())
-				{
-					idList.push_back(world.getEntityManager()->getId());
-					float scale = static_cast<float>(offsetY) / static_cast<float>(cfg.chrNameBackGround.get().height);
-					world.createUnit(idList.back(), ui::ImageBoxExCom({ Vector2{ static_cast<float>(x), static_cast<float>(y) } + cfg.drawOffset, scale, cfg.chrNameBackGround, cfg.textBoxLayer }));
-				}
-
-				idList.push_back(world.getEntityManager()->getId());
-				world.createUnit(idList.back(), ui::TextBoxExCom{ cfg.fontData, nameBuf, Vector2{float(x + textOffsetX), float(y)} + cfg.drawOffset, WHITE, cfg.textBoxLayer, float(cfg.textSize), 0.1f * cfg.textSize });
-				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
-				++nextScene;
-			}
-			else if (!memcmp(nextScene.get(), "Button", 6) && (nextScene[6] == '(' || isspace(nextScene[6])))
-			{
-				nextScene += 6;
-				while (*nextScene != '(') ++nextScene;
-				++nextScene;
-				float relativeX, relativeY, ratio, width;
-				std::vector<std::string> languages;
-				std::string buf;
-				std::string alignment;
-				Color textColor;
-				rlRAII::Texture2DRAII normalImg;
-				rlRAII::Texture2DRAII hoverImg;
-				rlRAII::Texture2DRAII pressImg;
-				relativeX = GetNumber(nextScene, ',');
-				relativeY = GetNumber(nextScene, ',');
-				ratio = GetNumber(nextScene, ',');
-				width = GetNumber(nextScene, ',');
-
-				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				languages.push_back(buf);
-				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				languages.push_back(buf);
-				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				languages.push_back(buf);
-				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				languages.push_back(buf);
-
-				ReadNextStateTag(alignment, nextScene);
-
-				ReadNextNumber(buf, nextScene);
-				textColor.r = std::stoi(buf);
-				ReadNextNumber(buf, nextScene);
-				textColor.g = std::stoi(buf);
-				ReadNextNumber(buf, nextScene);
-				textColor.b = std::stoi(buf);
-				ReadNextNumber(buf, nextScene);
-				textColor.a = std::stoi(buf);
-
-				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				normalImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
-				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				hoverImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
-				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				pressImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
-
-				float offsetX = cfg.ScreenWidth * relativeX, offsetY = cfg.ScreenHeight * relativeY;
-				float height = width / ratio;
-				if (alignment == "Center")
-				{
-					offsetX -= (width * cfg.ScreenWidth) / 2.0f;
-					offsetY -= (height * cfg.ScreenHeight) / 2.0f;
-				}
-				
-				
-				if (sceneType == "SelectScene")
-				{
-					exIdList.push_back(world.getEntityManager()->getId());
-					SetTextureFilter(normalImg.get(), RL_TEXTURE_FILTER_BILINEAR);
-					SetTextureFilter(hoverImg.get(), RL_TEXTURE_FILTER_BILINEAR);
-					SetTextureFilter(pressImg.get(), RL_TEXTURE_FILTER_BILINEAR);
-					world.createUnit(exIdList.back(), ui::ButtonExCom
-					{
-						cfg.fontData,
-						normalImg,
-						hoverImg,
-						pressImg,
-						languages[cfg.uiLanguage],
-						textColor,
-						cfg.textSize,
-						int(cfg.textSize * 0.1),
-						Vector2{ offsetX, offsetY } + cfg.drawOffset,
-						Vector2{ width * cfg.ScreenWidth, height * cfg.ScreenWidth },
-						cfg.ButtonLayer,
-						(width * cfg.ScreenWidth) / normalImg.get().width
-					});
-					world.getMessageManager()->subscribe(exIdList.back());
-				}
-				else
-				{
-					idList.push_back(world.getEntityManager()->getId());
-					SetTextureFilter(normalImg.get(), RL_TEXTURE_FILTER_BILINEAR);
-					SetTextureFilter(hoverImg.get(), RL_TEXTURE_FILTER_BILINEAR);
-					SetTextureFilter(pressImg.get(), RL_TEXTURE_FILTER_BILINEAR);
-					world.createUnit(idList.back(), ui::ButtonExCom
-						{
-							cfg.fontData,
-							normalImg,
-							hoverImg,
-							pressImg,
-							languages[cfg.uiLanguage],
-							textColor,
-							cfg.textSize,
-							int(cfg.textSize * 0.1),
-							Vector2{ offsetX, offsetY } + cfg.drawOffset,
-							Vector2{ width * cfg.ScreenWidth, height * cfg.ScreenWidth },
-							cfg.ButtonLayer,
-							(width * cfg.ScreenWidth) / normalImg.get().width
-						});
-					world.getMessageManager()->subscribe(idList.back());
-				}
-
-				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
-				++nextScene;
-			}
-			else if (!memcmp(nextScene.get(), "Image", 5) && (nextScene[5] == '(' || isspace(nextScene[5])))
-			{
-				nextScene += 5;
-				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
-				++nextScene;
-				float relativeX, relativeY, ratio, width, scale, x, y;
-				rlRAII::Texture2DRAII img;
-				std::string buf;
-				relativeX = GetNumber(nextScene, ',');
-				relativeY = GetNumber(nextScene, ',');
-				ratio = GetNumber(nextScene, ',');
-				width = GetNumber(nextScene, ',');
-				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				img = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
-				ReadNextStateTag(buf, nextScene);
-				if (buf == "Cover")
-				{
-					scale = std::max(width * cfg.ScreenWidth / img.get().width, width / ratio * cfg.ScreenWidth / img.get().height);
-				}
-				else
-				{
-					scale = std::min(width * cfg.ScreenWidth / img.get().width, width / ratio * cfg.ScreenWidth / img.get().height);
-				}
-				ReadNextStateTag(buf, nextScene);
-				if (buf == "Center")
-				{
-					x = (relativeX * cfg.ScreenWidth - img.get().width * scale / 2);
-					y = (relativeY * cfg.ScreenHeight - img.get().height * scale / 2);
-				}
-				else
-				{
-					x = relativeX * cfg.ScreenWidth;
-					y = relativeY * cfg.ScreenHeight;
-				}
-				int layerDepth = (int)int(GetNumber(nextScene, ')'));
-				idList.push_back(world.getEntityManager()->getId());
-				world.createUnit(idList.back(), ui::ImageBoxExCom{ Vector2{x, y} + cfg.drawOffset, scale, img, layerDepth });
-
-				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
-				++nextScene;
-			}
-			else if (!memcmp(nextScene.get(), "SetStr", 6))
-			{
-				nextScene += 6;
-				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
-				++nextScene;
-				std::string varName;
-				while (*nextScene != '$' && !nextScene.eof()) ++nextScene;
-				++nextScene;
-				while (!isspace(*nextScene) && !nextScene.eof() && *nextScene != ',' && *nextScene != '[')
-				{
-					varName += *nextScene;
-					++nextScene;
-				}
-				int idx = 0;
-				if (*nextScene == '[')
-				{
-					++nextScene;
-					idx = (int)round(GetNumber(nextScene, ']'));
-					--nextScene;//GetNumber会跳过','，这里为了匹配通用跳跃逻辑
-				}
-				while (!nextScene.eof() && *nextScene != ',') ++nextScene;
-				++nextScene;
-				std::string value = GetString(nextScene);
-				if (varName != "TARGET_LIST" && varName != "TEXTBOX_BACKGROUND" && varName != "CHR_NAME_BACKGROUND")
-				{
-					auto varRef = GetVariable(varName);
-					if (varRef.type == VarType::Str && varRef.length > 0)
-					{
-						StringStorage[varRef.offset + idx] = value;
-					}
-				}
-				else
-				{
-					if (varName == "TARGET_LIST" && idx < targetList.size())
-					{
-						targetList[idx] = value;
-					}
-					
-				}
-				
-				while (!nextScene.eof() && *nextScene != '\n') ++nextScene;
-				++nextScene;
-
-			}
-			else if (!memcmp(nextScene.get(), "SetNum", 6))
-			{
-				nextScene += 6;
-				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
-				++nextScene;
-				std::string varName;
-				while (*nextScene != '$' && !nextScene.eof()) ++nextScene;
-				++nextScene;
-				while (!isspace(*nextScene) && !nextScene.eof() && *nextScene != ',' && *nextScene != '[')
-				{
-					varName += *nextScene;
-					++nextScene;
-				}
-				int idx = 0;
-				if (*nextScene == '[')
-				{
-					++nextScene;
-					idx = (int)round(GetNumber(nextScene, ']'));
-					while (*nextScene != ']' && !nextScene.eof()) ++nextScene;
-					++nextScene;
-				}
-				while (!nextScene.eof() && *nextScene != ',') ++nextScene;
-				++nextScene;
-				double value = GetNumber(nextScene, ')');
-				auto varRef = GetVariable(varName);
-				if (varRef.type == VarType::Num && varRef.length > 0)
-				{
-					NumberStorage[varRef.offset + idx] = value;
-				}
-				while (!nextScene.eof() && *nextScene != '\n') ++nextScene;
-				++nextScene;
-			}
-			else if (!memcmp(nextScene.get(), "if", 2))
-			{
-				nextScene += 2;
-				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
-				++nextScene;
-				double var0 = f2(nextScene, ')');
-				bool cond = false;
-				SkipSpaceUntil(nextScene, ')');
-				if (*nextScene == '<')
-				{
-					if (nextScene[1] == '=')
-					{
-						nextScene += 2;
-						cond = (var0 <= f2(nextScene, ')'));
-					}
-					else
-					{
-						nextScene += 1;
-						cond = (var0 < f2(nextScene, ')'));
-					}
-				}
-				else if (*nextScene == '>')
-				{
-					if (nextScene[1] == '=')
-					{
-						nextScene += 2;
-						cond = (var0 >= f2(nextScene, ')'));
-					}
-					else
-					{
-						nextScene += 1;
-						cond = (var0 > f2(nextScene, ')'));
-					}
-				}
-				else if (*nextScene == '=')
-				{
-					if (nextScene[1] == '=')
-					{
-						nextScene += 2;
-						cond = (var0 == f2(nextScene, ')'));
-					}
-				}
-				else if (*nextScene == '!')
-				{
-					if (nextScene[1] == '=')
-					{
-						nextScene += 2;
-						cond = (var0 != f2(nextScene, ')'));
-					}
-				}
-				else
-				{
-					cond = false;
-				}
-				if (cond)
-				{
-					while (*nextScene != '{' && !nextScene.eof()) ++nextScene;
-					++nextScene;
-				}
-				else
-				{
-					while (*nextScene != '{' && !nextScene.eof()) ++nextScene;
-					++nextScene;
-					int braceCount = 1;
-					while (!nextScene.eof() && braceCount > 0)
-					{
-						if (*nextScene == '{') ++braceCount;
-						else if (*nextScene == '}') --braceCount;
-						else if (*nextScene == '(')
-						{
-							int braceCount2 = 1;
-							++nextScene;
-							while (!nextScene.eof() && braceCount2 > 0)
-							{
-								if (*nextScene == '(') ++braceCount2;
-								else if (*nextScene == ')') --braceCount2;
-								++nextScene;
-							}
-						}
-						else if (*nextScene == '/')
-						{
-							if (nextScene[1] == '/')
-							{
-								while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
-							}
-						}
-						++nextScene;
-					}
-				}
-			}
-			else if (!memcmp(nextScene.get(), "//", 2))
-			{
-				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
-				++nextScene;
-			}
-			else
-			{
-				++nextScene;
-			}
+			LoadFunction(nextScene, sceneName, sceneType, textTmp, argsList);
 		}
 
 		if (sceneType == "TextScene")
 		{
 			idList.push_back(world.getEntityManager()->getId());
-			auto it = viewer.find(targetList.back());
+			auto it = viewer.find(argsList.back());
 			SceneView view{ sceneName, SceneView::SceneType::TYPE_TEXTSCENE, textTmp };
-			world.createUnit(idList.back(), visualnovel::TextSceneCom{ exIdList.back(), viewer[targetList.back()], view});
+			world.createUnit(idList.back(), visualnovel::TextSceneCom{ exIdList.back(), viewer[argsList.back()], view});
 		}
 		else if (sceneType == "SelectScene")
 		{
 			idList.push_back(world.getEntityManager()->getId());
 			std::vector<rlRAII::FileRAII::Iterator> targetItList;
-			for (auto target : targetList)
+			for (auto target : argsList)
 			{
 				auto it = viewer.find(target);
 				targetItList.push_back(it->second);
 			}
 			world.createUnit(idList.back(), visualnovel::SelectSceneCom{ exIdList, targetItList });
+		}
+		else if (sceneType == "DelayScene")
+		{
+			idList.push_back(world.getEntityManager()->getId());
+			world.createUnit(idList.back(), visualnovel::DelaySceneCom{ std::stod(argsList[1]), 0, viewer[argsList[0]]});
 		}
 	}
 
@@ -1193,8 +1281,10 @@ namespace visualnovel
 		world.addPool<StandardTextBox>();
 		world.addSystem(vn::StandardTextBoxSystem(world.getDoubleBuffer<StandardTextBox>(), world.getUiLayer(), cfg.textBoxLayer, cfg));
 		world.addPool<visualnovel::TextSceneCom>();
-		world.addSystem(TextSceneSystem(world, cfg, scriptLoader));
+		world.addSystem(TextSceneSystem(world, scriptLoader));
 		world.addPool<visualnovel::SelectSceneCom>();
-		world.addSystem(SelectSceneSystem(world, cfg, scriptLoader));
+		world.addSystem(SelectSceneSystem(world, scriptLoader));
+		world.addPool<DelaySceneCom>();
+		world.addSystem(DelaySceneSystem(world, scriptLoader));
 	}
 }

@@ -2,7 +2,8 @@ Global
 Begin("scMenu")
 String str
 
-Scene scMenu(SelectScene : sc_0_1, sc_0_2)
+
+Scene scMenu(SelectScene : load_0_1, sc_0_1)
 Button(1 / 2, 1 / 2,
 	   3.6585366, 0.15625,
 	   "场景1-语言1 ",
@@ -14,22 +15,33 @@ Button(1 / 2, 1 / 2,
 	   "resource\\img\\Button0.png", "resource\\img\\Button1.png", "resource\\img\\Button2.png")
 Button(0.5, 0.6, 3.6585366, 0.15625, "场景2-语言1 ", "场景2-语言2", "场景2-语言3", "场景2-语言4", @Center, 255, 255, 255, 255, "resource\\img\\Button0.png", "resource\\img\\Button1.png", "resource\\img\\Button2.png")
 Image(0.5, 0.5, 16 / 9, 0.5, "resource\\img\\backGround.png", @Contain, @Center, 1)
-if (0>=0)
-{SetStr($TARGET_LIST[1], "sc_0_4")}
-Scene sc_0_1(TextScene : sc_0_2)
 
+
+Scene load_0_1(DelayScene : sc_0_1, 1500)
+Image(0, 0, 16 / 9, 1, "resource\\img\\backGround.png", @Contain, @Default, 1)
+TextBox(0.5, 0.5, 120, "Loading...", 255, 255, 255, 255, "", 2, @Center)
+
+
+Scene sc_0_1(TextScene : sc_0_2)
 TextScene("测试文本",
 		  "測試文本",
 		  "テストテキスト",
 		  "Test text.",
 		  "resource\\img\\backGround.png", @Cover)
 
+
 Scene sc_0_2(TextScene : sc_0_3)
-TextScene("\"这个脚本加载器似乎能跑起来？\"", "測試文本", "テストテキスト", "Test text.", "resource\\img\\backGround.png", @Cover)
+TextScene("\"这个脚本加载器似乎能跑起来？\"",
+		  "測試文本",
+		  "テストテキスト",
+		  "Test text.",
+		  "resource\\img\\backGround.png", @Cover)
 Chr("奇怪の作者")
 
+
 Scene sc_0_3(TextScene : sc_0_4)
-TextScene("长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长的测试文本", "语言1", "语言2", "语言3", "", "Cover")
+TextScene("长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长的测试文本", "语言1", "语言2", "语言3", "", @Cover)
+
 
 Scene sc_0_4(TextScene : scMenu)
 TextScene("回去循环吧", "语言1", "语言2", "语言3", "resource\\img\\backGround.png", @Cover)
