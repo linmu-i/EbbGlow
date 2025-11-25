@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ECS.h"
-#include "Message.h"
-#include "raylibRAII.h"
+#include <core/ECS.h>
+#include <core/Message.h>
+#include <utils/Resource.h>
 
 namespace ecs
 {
@@ -26,14 +26,14 @@ namespace ecs
 		
 		std::vector<entity> waitDelete;
 
-		rlRAII::RenderTexture2DRAII renderTexture0;
-		rlRAII::RenderTexture2DRAII renderTexture1;
+		rsc::SharedRenderTexture2D renderTexture0;
+		rsc::SharedRenderTexture2D renderTexture1;
 
-		rlRAII::RenderTexture2DRAII& activeRenderTexture()
+		rsc::SharedRenderTexture2D& activeRenderTexture()
 		{
 			return framesCount % 2 == 0 ? renderTexture0 : renderTexture1;
 		}
-		rlRAII::RenderTexture2DRAII& inactiveRenderTexture()
+		rsc::SharedRenderTexture2D& inactiveRenderTexture()
 		{
 			return framesCount % 2 == 0 ? renderTexture1 : renderTexture0;
 		}
@@ -121,7 +121,7 @@ namespace ecs
 			}
 			return nullptr;
 		}
-		rlRAII::RenderTexture2DRAII& getSceenshot()
+		rsc::SharedRenderTexture2D& getSceenshot()
 		{
 			return inactiveRenderTexture();
 		}

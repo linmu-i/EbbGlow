@@ -1,14 +1,14 @@
 #pragma once
 
-#include "ECS.h"
-#include "World.h"
-#include "raylibRAII.h"
+#include "core/ECS.h"
+#include "core/World.h"
+#include "utils/Resource.h"
 
 namespace ui
 {
 	struct AnimationCom
 	{
-		std::vector<rlRAII::Texture2DRAII> framesSequence;
+		std::vector<rsc::SharedTexture2D> framesSequence;
 		std::vector<float> frameTime;
 		size_t activeFrame;
 		float frameTimeCount;
@@ -49,11 +49,11 @@ namespace ui
 	class AnimationDraw : public ecs::DrawBase
 	{
 	private:
-		rlRAII::Texture2DRAII frame;
+		rsc::SharedTexture2D frame;
 		Vector2 pos;
 
 	public:
-		AnimationDraw(const rlRAII::Texture2DRAII& frame, const Vector2& pos) : frame(frame), pos(pos) {}
+		AnimationDraw(const rsc::SharedTexture2D& frame, const Vector2& pos) : frame(frame), pos(pos) {}
 
 		void draw() override
 		{
@@ -164,7 +164,7 @@ namespace ui
 
 	struct KeyFramesAnimationCom
 	{
-		rlRAII::Texture2DRAII texture;
+		rsc::SharedTexture2D texture;
 		std::vector<KeyFrame> keyFrames;
 		ecs::Layers* layer;
 		int layerDepth;
@@ -182,10 +182,10 @@ namespace ui
 		float scale;
 		float rotation;
 		uint8_t alpha;
-		rlRAII::Texture2DRAII texture;
+		rsc::SharedTexture2D texture;
 
 	public:
-		KeyFramesAnimationDraw(Vector2 position, Vector2 origin, float scale, float rotation, uint8_t alpha, const rlRAII::Texture2DRAII& texture) :
+		KeyFramesAnimationDraw(Vector2 position, Vector2 origin, float scale, float rotation, uint8_t alpha, const rsc::SharedTexture2D& texture) :
 			position(position), origin(origin), scale(scale), rotation(rotation), alpha(alpha), texture(texture) {}
 
 		void draw() override

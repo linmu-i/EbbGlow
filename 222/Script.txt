@@ -17,9 +17,9 @@ Button(0.5, 0.6, 3.6585366, 0.15625, "场景2-语言1 ", "场景2-语言2", "场
 Image(0.5, 0.5, 16 / 9, 0.5, "resource\\img\\backGround.png", @Contain, @Center, 1)
 
 
-Scene load_0_1(DelayScene : sc_0_1, 1500)
-Image(0, 0, 16 / 9, 1, "resource\\img\\backGround.png", @Contain, @Default, 1)
-TextBox(0.5, 0.5, 120, "Loading...", 255, 255, 255, 255, "", 2, @Center)
+Scene load_0_1(DelayScene : scMenu, 0)
+//Image(0, 0, 16 / 9, 1, "resource\\img\\backGround.png", @Contain, @Default, 1)
+//TextBox(0.5, 0.5, 120, "Loading...", 255, 255, 255, 255, "", 2, @Center)
 
 
 Scene sc_0_1(TextScene : sc_0_2)

@@ -2,37 +2,40 @@
 
 #include <unordered_set>
 
-#include "UI.h"
-#include "World.h"
-#include "raylibRAII.h"
+#include <ui/UI.h>
+#include <core/World.h>
+#include <utils/Resource.h>
 
 namespace visualnovel
 {
 	struct VisualNovelConfig
 	{
-		uint8_t mainLanguage;
-		uint8_t secondaryLanguage;
-		uint8_t uiLanguage;
+		uint8_t mainLanguage = 0;
+		uint8_t secondaryLanguage = 1;
+		uint8_t uiLanguage = 0;
 
-		float textSpeed;
-		int textSize;
+		float textSpeed = 1.0f;
+		int textSize = 20;
 
-		rlRAII::FileRAII fontData;
-		//uint16_t fontSize;
+		rsc::SharedFile fontData;
 
-		rlRAII::Texture2DRAII textBoxBackGround;
+		rsc::SharedTexture2D textBoxBackGround;
 
-		rlRAII::Texture2DRAII chrNameBackGround;
-		float chrNameOffsetX;
+		rsc::SharedTexture2D chrNameBackGround;
+		float chrNameOffsetX = 0.0f;
 
-		int ScreenWidth;
-		int ScreenHeight;
+		int ScreenWidth = 0;
+		int ScreenHeight = 0;
 
-		constexpr static int backGroundLayer = 0;
-		constexpr static int illustrationLayer = 2;
-		constexpr static int textBoxLayer = 4;
-		constexpr static int textBoxBackGroundLayer = 3;
-		constexpr static int ButtonLayer = 6;
+		static struct LayerDef
+		{
+			constexpr static int backGroundLayer = 0;
+			constexpr static int illustrationLayer = 2;
+			constexpr static int textBoxBackGroundLayer = 3;
+			constexpr static int textBoxLayer = 4;
+			constexpr static int ButtonLayer = 6;
+		} LayerDefine;
+		
 
 		bool showReadText = false;
 		Color readTextColor = WHITE;
@@ -49,12 +52,12 @@ namespace visualnovel
 	{
 		bool drawing;
 
-		rlRAII::FontRAII font;
+		rsc::SharedFont font;
 
 		float timeCount;
 
-		std::vector<rlRAII::Texture2DRAII> textL0;
-		std::vector<rlRAII::Texture2DRAII> textL1;
+		std::vector<rsc::SharedTexture2D> textL0;
+		std::vector<rsc::SharedTexture2D> textL1;
 
 		float textSize;
 		float spacing;
@@ -73,7 +76,7 @@ namespace visualnovel
 
 		
 		
-		StandardTextBox(const std::string& textL0, const std::string& textL1, float textSize, const rlRAII::FileRAII& fontData, float speed, Vector2 pos, float width, Color textColor) :
+		StandardTextBox(const std::string& textL0, const std::string& textL1, float textSize, const rsc::SharedFile& fontData, float speed, Vector2 pos, float width, Color textColor) :
 			textSize(textSize), spacing(textSize * 0.1f), lineSpacing(textSize * 0.3f), speed(speed), timeCount(0.0f), drawing(true),
 			font(DynamicLoadFontFromMemory((textL0 + textL1).c_str(),fontData.fileName(), fontData.get(), fontData.size(), textSize * 2)),
 			textHeight(MeasureTextEx(font.get(), textL0.c_str(), textSize, spacing).y), pos(pos)
@@ -93,7 +96,7 @@ namespace visualnovel
 				ClearBackground(BLANK);
 				DrawTextCodepoints(font.get(), s.data(), s.size(), { 0,0 }, textSize, spacing, textColor);
 				EndTextureMode();
-				this->textL0.push_back(rlRAII::Texture2DRAII(tmpTexture.texture));
+				this->textL0.push_back(rsc::SharedTexture2D(tmpTexture.texture));
 				tmpTexture.texture = {};
 				UnloadRenderTexture(tmpTexture);
 				UnloadUTF8(text);
@@ -110,7 +113,7 @@ namespace visualnovel
 				ClearBackground(BLANK);
 				DrawTextCodepoints(font.get(), s.data(), s.size(), { 0,0 }, textSize, spacing, textColor);
 				EndTextureMode();
-				this->textL1.push_back(rlRAII::Texture2DRAII(tmpTexture.texture));
+				this->textL1.push_back(rsc::SharedTexture2D(tmpTexture.texture));
 				tmpTexture.texture = {};
 				UnloadRenderTexture(tmpTexture);
 				UnloadUTF8(text);
@@ -136,11 +139,11 @@ namespace visualnovel
 	class StandardTextBoxDraw : public ecs::DrawBase
 	{
 	private:
-		rlRAII::RenderTexture2DRAII texture;
+		rsc::SharedRenderTexture2D texture;
 		Vector2 pos;
 
 	public:
-		StandardTextBoxDraw(Vector2 position, rlRAII::RenderTexture2DRAII texture) : pos(position), texture(texture) {}
+		StandardTextBoxDraw(Vector2 position, rsc::SharedRenderTexture2D texture) : pos(position), texture(texture) {}
 		void draw() override
 		{
 			DrawTextureRec(texture.get().texture, { 0, 0, float(texture.get().texture.width), -float(texture.get().texture.height) }, pos, WHITE);
@@ -153,7 +156,7 @@ namespace visualnovel
 		ecs::DoubleComs<StandardTextBox>* textBoxs;
 		ecs::Layers* layers;
 		int layerDepth;
-		rlRAII::RenderTexture2DRAII textureTmp;
+		rsc::SharedRenderTexture2D textureTmp;
 
 	public:
 		StandardTextBoxSystem(ecs::DoubleComs<StandardTextBox>* textBoxs, ecs::Layers* layers, int layerDepth, const VisualNovelConfig& cfg) : textBoxs(textBoxs), layers(layers), layerDepth(layerDepth), textureTmp(LoadRenderTexture(cfg.ScreenWidth, cfg.ScreenHeight)) {}
@@ -234,18 +237,6 @@ namespace visualnovel
 		world.addPool<StandardTextBox>();
 		world.addSystem(StandardTextBoxSystem(world.getDoubleBuffer<StandardTextBox>(), world.getUiLayer(), 10, cfg));
 	}
-
-	class SceneBase
-	{
-	public:
-		virtual void update() = 0;
-	};
-
-	class TextScene : public SceneBase
-	{
-	private:
-		
-	};
 	
 }
 

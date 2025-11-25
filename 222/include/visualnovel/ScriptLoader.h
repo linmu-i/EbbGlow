@@ -3,8 +3,8 @@
 #include <fstream>
 #include <future>
 
-#include "ECS.h"
-#include "World.h"
+#include <core/ECS.h>
+#include <core/World.h>
 #include "VisualNovel.h"
 
 namespace visualnovel
@@ -74,7 +74,7 @@ namespace visualnovel
 			return *this;
 		}
 
-		ScriptData& operator+=(const rlRAII::FileRAII& other)
+		ScriptData& operator+=(const rsc::SharedFile& other)
 		{
 			unsigned char* newData = new unsigned char[size + other.size() + 1];
 			memcpy(newData, data, size);
@@ -86,13 +86,13 @@ namespace visualnovel
 			return *this;
 		}
 
-		rlRAII::FileRAII::Iterator begin()
+		rsc::SharedFile::Iterator begin()
 		{
-			return rlRAII::FileRAII::Iterator(size, data);
+			return rsc::SharedFile::Iterator(size, data);
 		}
-		rlRAII::FileRAII::Iterator end()
+		rsc::SharedFile::Iterator end()
 		{
-			return rlRAII::FileRAII::Iterator(size, data, size);
+			return rsc::SharedFile::Iterator(size, data, size);
 		}
 
 		const unsigned char* getData() const { return data; }
@@ -104,8 +104,8 @@ namespace visualnovel
 	private:
 		VisualNovelConfig cfg;
 
-		rlRAII::MusicRAII bgm;
-		rlRAII::SoundRAII voice;
+		rsc::SharedMusic bgm;
+		rsc::SharedSound voice;
 
 	public:
 		void update() override
@@ -139,7 +139,7 @@ namespace visualnovel
 		ScriptData script;
 		visualnovel::VisualNovelConfig& cfg;
 
-		std::unordered_map<std::string, rlRAII::FileRAII::Iterator> viewer;
+		std::unordered_map<std::string, rsc::SharedFile::Iterator> viewer;
 		std::unordered_map<std::string, SceneView> logs;
 		std::vector<std::string> targetScene;
 		std::vector<ecs::entity> idList;
@@ -171,7 +171,7 @@ namespace visualnovel
 
 		
 
-		void CreateTextScene(const std::vector<std::string>& languages, ecs::entity textBoxId, rlRAII::Texture2DRAII backGround, bool read, BackgroundDrawType drawType)
+		void CreateTextScene(const std::vector<std::string>& languages, ecs::entity textBoxId, rsc::SharedTexture2D backGround, bool read, BackgroundDrawType drawType)
 		{
 			world.createUnit(textBoxId, vn::StandardTextBox
 			(
@@ -218,23 +218,23 @@ namespace visualnovel
 			if (backGround.valid())
 			{
 				idList.push_back(idMgr->getId());
-				world.createUnit(idList.back(), ui::ImageBoxExCom({ bgPosition + cfg.drawOffset, bgScale, backGround, cfg.backGroundLayer }));
+				world.createUnit(idList.back(), ui::ImageBoxExCom({ bgPosition + cfg.drawOffset, bgScale, backGround, cfg.LayerDefine.backGroundLayer }));
 			}
 			if (cfg.textBoxBackGround.valid())
 			{
 				float scale = std::max(float(cfg.ScreenWidth) / cfg.textBoxBackGround.get().width, float(cfg.ScreenHeight * (0.25f + 0.03125f)) / cfg.textBoxBackGround.get().height);
 				idList.push_back(idMgr->getId());
-				world.createUnit(idList.back(), ui::ImageBoxExCom({ Vector2{ (cfg.ScreenWidth - cfg.textBoxBackGround.get().width * scale) / 2, cfg.ScreenHeight * (0.75f - 0.03125f)} + cfg.drawOffset, scale, cfg.textBoxBackGround, cfg.textBoxBackGroundLayer}));
+				world.createUnit(idList.back(), ui::ImageBoxExCom({ Vector2{ (cfg.ScreenWidth - cfg.textBoxBackGround.get().width * scale) / 2, cfg.ScreenHeight * (0.75f - 0.03125f)} + cfg.drawOffset, scale, cfg.textBoxBackGround, cfg.LayerDefine.textBoxBackGroundLayer}));
 			}
 		}
 
-		void SkipSpaceUntil(rlRAII::FileRAII::Iterator& ptr, unsigned char stop)
+		void SkipSpaceUntil(rsc::SharedFile::Iterator& ptr, unsigned char stop)
 		{
 			while (!ptr.eof() && *ptr != stop && std::isspace(*ptr))
 				++ptr;
 		}
 
-		double f0(rlRAII::FileRAII::Iterator& ptr, unsigned char stop)
+		double f0(rsc::SharedFile::Iterator& ptr, unsigned char stop)
 		{
 			SkipSpaceUntil(ptr, stop);
 			if (ptr.eof() || *ptr == stop) return 0.0;
@@ -309,7 +309,7 @@ namespace visualnovel
 
 			return 0.0;
 		}
-		double f1(rlRAII::FileRAII::Iterator& ptr, unsigned char stop)
+		double f1(rsc::SharedFile::Iterator& ptr, unsigned char stop)
 		{
 			double result = f0(ptr, stop);
 			SkipSpaceUntil(ptr, stop);
@@ -335,7 +335,7 @@ namespace visualnovel
 			}
 			return result;
 		}
-		double f2(rlRAII::FileRAII::Iterator& ptr, unsigned char stop)
+		double f2(rsc::SharedFile::Iterator& ptr, unsigned char stop)
 		{
 			double result = f1(ptr, stop);
 			SkipSpaceUntil(ptr, stop);
@@ -360,7 +360,7 @@ namespace visualnovel
 			return result;
 		}
 
-		void ReadNextNumber(std::string& textBuf, rlRAII::FileRAII::Iterator& nextScene)
+		void ReadNextNumber(std::string& textBuf, rsc::SharedFile::Iterator& nextScene)
 		{
 			textBuf.clear();
 			while (!isdigit(*nextScene) && *nextScene != '.' && *nextScene != '+' && *nextScene != '-' && !nextScene.eof()) ++nextScene;
@@ -372,7 +372,7 @@ namespace visualnovel
 			while ((*nextScene != ',' && *nextScene != ')') && !nextScene.eof()) ++nextScene;
 			++nextScene;
 		}
-		void ReadNextStateTag(std::string& textBuf, rlRAII::FileRAII::Iterator& nextScene)
+		void ReadNextStateTag(std::string& textBuf, rsc::SharedFile::Iterator& nextScene)
 		{
 			textBuf.clear();
 			while (*nextScene != '@' && !nextScene.eof()) ++nextScene;
@@ -386,7 +386,7 @@ namespace visualnovel
 			while ((*nextScene != ',' && *nextScene != ')') && !nextScene.eof()) ++nextScene;
 			++nextScene;
 		}
-		void ReadNextString(std::string& textBuf, rlRAII::FileRAII::Iterator& nextScene)
+		void ReadNextString(std::string& textBuf, rsc::SharedFile::Iterator& nextScene)
 		{
 			textBuf.clear();
 			while (*nextScene != '"' && *nextScene != '$' && !nextScene.eof()) ++nextScene;
@@ -445,7 +445,7 @@ namespace visualnovel
 			++nextScene;
 		};
 
-		std::string GetString(rlRAII::FileRAII::Iterator& nextScene)
+		std::string GetString(rsc::SharedFile::Iterator& nextScene)
 		{
 			std::string result;
 			std::string buf;
@@ -457,7 +457,7 @@ namespace visualnovel
 			++nextScene;
 			return result;
 		}
-		double GetNumber(rlRAII::FileRAII::Iterator& nextScene, unsigned char stop)
+		double GetNumber(rsc::SharedFile::Iterator& nextScene, unsigned char stop)
 		{
 			double result = f2(nextScene, stop);
 			while ((*nextScene != ',' && *nextScene != ')') && !nextScene.eof()) ++nextScene;
@@ -477,7 +477,7 @@ namespace visualnovel
 			}
 		}
 
-		void LoadSceneInfo(rlRAII::FileRAII::Iterator& nextScene, std::string& sceneName, std::string& sceneType, std::vector<std::string>& argsList)
+		void LoadSceneInfo(rsc::SharedFile::Iterator& nextScene, std::string& sceneName, std::string& sceneType, std::vector<std::string>& argsList)
 		{
 			std::string targetTmp;
 			while (memcmp(nextScene.get(), "Scene", 5)) ++nextScene;
@@ -515,7 +515,7 @@ namespace visualnovel
 			while (*nextScene != '\n' && !nextScene.eof())	++nextScene;
 			++nextScene;
 		}
-		void LoadFunction(rlRAII::FileRAII::Iterator& nextScene, std::string& sceneName, std::string& sceneType, std::string& textTmp, std::vector<std::string> argsList)
+		void LoadFunction(rsc::SharedFile::Iterator& nextScene, std::string& sceneName, std::string& sceneType, std::string& textTmp, std::vector<std::string> argsList)
 		{
 			if (!memcmp(nextScene.get(), "TextScene", 9) && (nextScene[9] == '(' || isspace(nextScene[9])))
 			{
@@ -548,13 +548,13 @@ namespace visualnovel
 				if (sceneType == "TextScene")
 				{
 					exIdList.push_back(world.getEntityManager()->getId());
-					CreateTextScene(texts, exIdList.back(), rlRAII::Texture2DRAII(bg.c_str()), readIt == cfg.readTextSet.end(), bgType);
+					CreateTextScene(texts, exIdList.back(), rsc::SharedTexture2D(bg.c_str()), readIt == cfg.readTextSet.end(), bgType);
 				}
 				else
 				{
 					auto idmgr = world.getEntityManager();
 					idList.push_back(idmgr->getId());
-					CreateTextScene(texts, idList.back(), rlRAII::Texture2DRAII(bg.c_str()), readIt == cfg.readTextSet.end(), bgType);
+					CreateTextScene(texts, idList.back(), rsc::SharedTexture2D(bg.c_str()), readIt == cfg.readTextSet.end(), bgType);
 				}
 				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
 				++nextScene;
@@ -563,7 +563,7 @@ namespace visualnovel
 			{
 				nextScene += 4;
 				std::string nameBuf;
-				nameBuf = GetString(nextScene);//ReadNextString(nameBuf, nextScene);
+				nameBuf = GetString(nextScene);
 
 				int offsetX = cfg.ScreenWidth * (1.0f / 12.0f);
 				int offsetY = cfg.ScreenHeight * 0.0625;
@@ -574,11 +574,11 @@ namespace visualnovel
 				{
 					idList.push_back(world.getEntityManager()->getId());
 					float scale = static_cast<float>(offsetY) / static_cast<float>(cfg.chrNameBackGround.get().height);
-					world.createUnit(idList.back(), ui::ImageBoxExCom({ Vector2{ static_cast<float>(x), static_cast<float>(y) } + cfg.drawOffset, scale, cfg.chrNameBackGround, cfg.textBoxLayer }));
+					world.createUnit(idList.back(), ui::ImageBoxExCom({ Vector2{ static_cast<float>(x), static_cast<float>(y) } + cfg.drawOffset, scale, cfg.chrNameBackGround, cfg.LayerDefine.textBoxLayer }));
 				}
 
 				idList.push_back(world.getEntityManager()->getId());
-				world.createUnit(idList.back(), ui::TextBoxExCom{ cfg.fontData, nameBuf, Vector2{float(x + textOffsetX), float(y)} + cfg.drawOffset, WHITE, cfg.textBoxLayer, float(cfg.textSize), 0.1f * cfg.textSize });
+				world.createUnit(idList.back(), ui::TextBoxExCom{ cfg.fontData, nameBuf, Vector2{float(x + textOffsetX), float(y)} + cfg.drawOffset, WHITE, cfg.LayerDefine.textBoxLayer, float(cfg.textSize), 0.1f * cfg.textSize });
 				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
 				++nextScene;
 			}
@@ -592,9 +592,9 @@ namespace visualnovel
 				std::string buf;
 				std::string alignment;
 				Color textColor;
-				rlRAII::Texture2DRAII normalImg;
-				rlRAII::Texture2DRAII hoverImg;
-				rlRAII::Texture2DRAII pressImg;
+				rsc::SharedTexture2D normalImg;
+				rsc::SharedTexture2D hoverImg;
+				rsc::SharedTexture2D pressImg;
 				relativeX = GetNumber(nextScene, ',');
 				relativeY = GetNumber(nextScene, ',');
 				ratio = GetNumber(nextScene, ',');
@@ -621,11 +621,11 @@ namespace visualnovel
 				textColor.a = std::stoi(buf);
 
 				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				normalImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
+				normalImg = rsc::SharedTexture2D(LoadTexture(buf.c_str()));
 				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				hoverImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
+				hoverImg = rsc::SharedTexture2D(LoadTexture(buf.c_str()));
 				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				pressImg = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
+				pressImg = rsc::SharedTexture2D(LoadTexture(buf.c_str()));
 
 				float offsetX = cfg.ScreenWidth * relativeX, offsetY = cfg.ScreenHeight * relativeY;
 				float height = width / ratio;
@@ -639,9 +639,9 @@ namespace visualnovel
 				if (sceneType == "SelectScene")
 				{
 					exIdList.push_back(world.getEntityManager()->getId());
-					SetTextureFilter(normalImg.get(), RL_TEXTURE_FILTER_BILINEAR);
-					SetTextureFilter(hoverImg.get(), RL_TEXTURE_FILTER_BILINEAR);
-					SetTextureFilter(pressImg.get(), RL_TEXTURE_FILTER_BILINEAR);
+					SetTextureFilter(normalImg.get(), TEXTURE_FILTER_BILINEAR);
+					SetTextureFilter(hoverImg.get(), TEXTURE_FILTER_BILINEAR);
+					SetTextureFilter(pressImg.get(), TEXTURE_FILTER_BILINEAR);
 					world.createUnit(exIdList.back(), ui::ButtonExCom
 						{
 							cfg.fontData,
@@ -654,7 +654,7 @@ namespace visualnovel
 							int(cfg.textSize * 0.1),
 							Vector2{ offsetX, offsetY } + cfg.drawOffset,
 							Vector2{ width * cfg.ScreenWidth, height * cfg.ScreenWidth },
-							cfg.ButtonLayer,
+							cfg.LayerDefine.ButtonLayer,
 							(width * cfg.ScreenWidth) / normalImg.get().width
 						});
 					world.getMessageManager()->subscribe(exIdList.back());
@@ -662,9 +662,9 @@ namespace visualnovel
 				else
 				{
 					idList.push_back(world.getEntityManager()->getId());
-					SetTextureFilter(normalImg.get(), RL_TEXTURE_FILTER_BILINEAR);
-					SetTextureFilter(hoverImg.get(), RL_TEXTURE_FILTER_BILINEAR);
-					SetTextureFilter(pressImg.get(), RL_TEXTURE_FILTER_BILINEAR);
+					SetTextureFilter(normalImg.get(), TEXTURE_FILTER_BILINEAR);
+					SetTextureFilter(hoverImg.get(), TEXTURE_FILTER_BILINEAR);
+					SetTextureFilter(pressImg.get(), TEXTURE_FILTER_BILINEAR);
 					world.createUnit(idList.back(), ui::ButtonExCom
 						{
 							cfg.fontData,
@@ -677,7 +677,7 @@ namespace visualnovel
 							int(cfg.textSize * 0.1),
 							Vector2{ offsetX, offsetY } + cfg.drawOffset,
 							Vector2{ width * cfg.ScreenWidth, height * cfg.ScreenWidth },
-							cfg.ButtonLayer,
+							cfg.LayerDefine.ButtonLayer,
 							(width * cfg.ScreenWidth) / normalImg.get().width
 						});
 					world.getMessageManager()->subscribe(idList.back());
@@ -692,14 +692,14 @@ namespace visualnovel
 				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
 				++nextScene;
 				float relativeX, relativeY, ratio, width, scale, x, y;
-				rlRAII::Texture2DRAII img;
+				rsc::SharedTexture2D img;
 				std::string buf;
 				relativeX = GetNumber(nextScene, ',');
 				relativeY = GetNumber(nextScene, ',');
 				ratio = GetNumber(nextScene, ',');
 				width = GetNumber(nextScene, ',');
 				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				img = rlRAII::Texture2DRAII(LoadTexture(buf.c_str()));
+				img = rsc::SharedTexture2D(LoadTexture(buf.c_str()));
 				ReadNextStateTag(buf, nextScene);
 				if (buf == "Cover")
 				{
@@ -911,14 +911,14 @@ namespace visualnovel
 				b = GetNumber(nextScene, ')');
 				a = GetNumber(nextScene, ')');
 				std::string fontPath = GetString(nextScene);
-				rlRAII::FileRAII fontFile;
+				rsc::SharedFile fontFile;
 				if (fontPath.empty())
 				{
 					fontFile = cfg.fontData;
 				}
 				else
 				{
-					fontFile = rlRAII::FileRAII(fontPath.c_str());
+					fontFile = rsc::SharedFile(fontPath.c_str());
 					if (!fontFile.valid())
 					{
 						fontFile = cfg.fontData;
@@ -927,7 +927,7 @@ namespace visualnovel
 				layerDepth = GetNumber(nextScene, ')');
 				std::string state;
 				ReadNextStateTag(state, nextScene);
-				rlRAII::FontRAII font = DynamicLoadFontFromMemory(text.c_str(), cfg.fontData.fileName(), cfg.fontData.get(), cfg.fontData.size(), static_cast<int>(textRelativeSize));
+				rsc::SharedFont font = DynamicLoadFontFromMemory(text.c_str(), cfg.fontData.fileName(), cfg.fontData.get(), cfg.fontData.size(), static_cast<int>(textRelativeSize));
 				if (state == "Center")
 				{
 					Vector2 cover = MeasureTextEx(font.get(), text.c_str(), float(textRelativeSize), float(textRelativeSize) * 0.1f);
@@ -1072,7 +1072,7 @@ namespace visualnovel
 				});
 		}
 
-		void loadScene(rlRAII::FileRAII::Iterator);
+		void loadScene(rsc::SharedFile::Iterator);
 
 		void addLog(const SceneView& sceneView)
 		{
@@ -1083,7 +1083,7 @@ namespace visualnovel
 	struct TextSceneCom
 	{
 		ecs::entity txtBoxId;
-		rlRAII::FileRAII::Iterator nextScene;
+		rsc::SharedFile::Iterator nextScene;
 		ScriptLoader::SceneView view;
 	};
 
@@ -1156,7 +1156,7 @@ namespace visualnovel
 	struct SelectSceneCom
 	{
 		std::vector<ecs::entity> buttonIdList;
-		std::vector<rlRAII::FileRAII::Iterator> nextSceneList;
+		std::vector<rsc::SharedFile::Iterator> nextSceneList;
 	};
 
 	class SelectSceneSystem : public ecs::SystemBase
@@ -1197,7 +1197,7 @@ namespace visualnovel
 		double delay;
 		double timeCount = 0;
 
-		rlRAII::FileRAII::Iterator targetScene;
+		rsc::SharedFile::Iterator targetScene;
 	};
 
 	class DelaySceneSystem : public ecs::SystemBase
@@ -1226,7 +1226,7 @@ namespace visualnovel
 		}
 	};
 
-	inline void ScriptLoader::loadScene(rlRAII::FileRAII::Iterator nextScene)
+	inline void ScriptLoader::loadScene(rsc::SharedFile::Iterator nextScene)
 	{
 		for (auto id : idList)
 		{
@@ -1258,7 +1258,7 @@ namespace visualnovel
 		else if (sceneType == "SelectScene")
 		{
 			idList.push_back(world.getEntityManager()->getId());
-			std::vector<rlRAII::FileRAII::Iterator> targetItList;
+			std::vector<rsc::SharedFile::Iterator> targetItList;
 			for (auto target : argsList)
 			{
 				auto it = viewer.find(target);
@@ -1279,7 +1279,7 @@ namespace visualnovel
 		ui::ApplyImageBoxEx(world);
 		ui::ApplyTextBoxEx(world);
 		world.addPool<StandardTextBox>();
-		world.addSystem(vn::StandardTextBoxSystem(world.getDoubleBuffer<StandardTextBox>(), world.getUiLayer(), cfg.textBoxLayer, cfg));
+		world.addSystem(vn::StandardTextBoxSystem(world.getDoubleBuffer<StandardTextBox>(), world.getUiLayer(), cfg.LayerDefine.textBoxLayer, cfg));
 		world.addPool<visualnovel::TextSceneCom>();
 		world.addSystem(TextSceneSystem(world, scriptLoader));
 		world.addPool<visualnovel::SelectSceneCom>();

@@ -76,7 +76,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\Program Files\raylib-5.5_win64_msvc16\raylib-5.5_win64_msvc16\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\C,C++\222\222\include;D:\Program Files\raylib-5.5_win64_msvc16\raylib-5.5_win64_msvc16\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ExceptionHandling>false</ExceptionHandling>
@@ -96,7 +96,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\Program Files\raylib-5.5_win64_msvc16\raylib-5.5_win64_msvc16\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\C,C++\222\222\include;D:\Program Files\raylib-5.5_win64_msvc16\raylib-5.5_win64_msvc16\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ExceptionHandling>false</ExceptionHandling>
@@ -114,7 +114,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\Program Files\raylib-5.5_win64_msvc16\raylib-5.5_win64_msvc16\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\C,C++\222\222\include;D:\Program Files\raylib-5.5_win64_msvc16\raylib-5.5_win64_msvc16\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ExceptionHandling>false</ExceptionHandling>
@@ -134,7 +134,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\Program Files\raylib-5.5_win64_msvc16\raylib-5.5_win64_msvc16\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\C,C++\222\222\include;D:\Program Files\raylib-5.5_win64_msvc16\raylib-5.5_win64_msvc16\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <ExceptionHandling>false</ExceptionHandling>
@@ -147,21 +147,21 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="include\platform\windows\Windows.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Windows.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Animation.h" />
-    <ClInclude Include="attachedLib.h" />
-    <ClInclude Include="ECS.h" />
-    <ClInclude Include="RLUtils.h" />
-    <ClInclude Include="Message.h" />
-    <ClInclude Include="raylibRAII.h" />
-    <ClInclude Include="ScriptLoader.h" />
-    <ClInclude Include="Platform.h" />
-    <ClInclude Include="UI.h" />
-    <ClInclude Include="World.h" />
-    <ClInclude Include="VisualNovel.h" />
+    <ClInclude Include="include\core\ECS.h" />
+    <ClInclude Include="include\core\Message.h" />
+    <ClInclude Include="include\core\World.h" />
+    <ClInclude Include="include\platform\Platform.h" />
+    <ClInclude Include="include\ui\Animation.h" />
+    <ClInclude Include="include\ui\UI.h" />
+    <ClInclude Include="include\utils\attachedLib.h" />
+    <ClInclude Include="include\utils\Resource.h" />
+    <ClInclude Include="include\utils\RLUtils.h" />
+    <ClInclude Include="include\visualnovel\ScriptLoader.h" />
+    <ClInclude Include="include\visualnovel\VisualNovel.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Script.txt" />

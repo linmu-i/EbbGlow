@@ -13,7 +13,7 @@
 #include <raylib.h>
 #include <raymath.h>
 
-#include "attachedLib.h"
+#include <utils/attachedLib.h>
 
 namespace ecs
 {

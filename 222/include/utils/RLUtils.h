@@ -1,8 +1,8 @@
 #pragma once
 
-#include "raylib.h"
-#include "raylibRAII.h"
-#include "Platform.h"
+#include <raylib.h>
+#include "Resource.h"
+#include <platform/Platform.h>
 #include <vector>
 
 Font LoadFont_cn(const char* fileName, int fontSize) {
@@ -181,7 +181,7 @@ void main() {
 
 void DrawSDFText(Font SDFFont, const char* text, Vector2 position, float fontSize, float spacing, Color tInt)
 {
-	static rlRAII::ShaderRAII SDFShader{ LoadShaderFromMemory(nullptr, fontUtils::SDFShaderText) };
+	static rsc::SharedShader SDFShader{ LoadShaderFromMemory(nullptr, fontUtils::SDFShaderText) };
 	BeginShaderMode(SDFShader.get());
 	DrawTextEx(SDFFont, text, position, fontSize, spacing, tInt);
 	EndShaderMode();
@@ -464,7 +464,7 @@ void main()
 }
 
 // 高斯模糊函数 - 支持可调半径
-rlRAII::Texture2DRAII TextureBlurGaussian(const Texture2D& inputTexture, int radius)
+rsc::SharedTexture2D TextureBlurGaussian(const Texture2D& inputTexture, int radius)
 {
 
 	// 验证半径值
@@ -542,7 +542,7 @@ rlRAII::Texture2DRAII TextureBlurGaussian(const Texture2D& inputTexture, int rad
 	UnloadRenderTexture(verticalBlurRT); // 这会释放帧缓冲区，但不会释放纹理
 
 	// 使用提取的纹理创建RAII对象
-	return rlRAII::Texture2DRAII(blurredTexture);
+	return rsc::SharedTexture2D(blurredTexture);
 }
 
 std::string CodepointToUtf8(int codepoint) {

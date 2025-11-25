@@ -1,11 +1,11 @@
 #pragma once
 
-#include "ECS.h"
-#include "World.h"
-#include "raylibRAII.h"
-#include "Message.h"
-#include "RLUtils.h"
-#include "Platform.h"
+#include "core/ECS.h"
+#include "core/World.h"
+#include "utils/Resource.h"
+#include "core/Message.h"
+#include "utils/RLUtils.h"
+#include "platform/Platform.h"
 
 namespace ui
 {
@@ -39,12 +39,12 @@ namespace ui
 
 		Color textColor;
 
-		rlRAII::Texture2DRAII icon;
+		rsc::SharedTexture2D icon;
 		Color color;
 
 		bool isIcon;
 
-		rlRAII::FontRAII font;
+		rsc::SharedFont font;
 
 		std::string text;
 
@@ -53,7 +53,7 @@ namespace ui
 		{
 			if (icoPath != nullptr)
 			{
-				icon = rlRAII::Texture2DRAII(icoPath);
+				icon = rsc::SharedTexture2D(icoPath);
 			}
 		}
 
@@ -62,7 +62,7 @@ namespace ui
 		{
 			if (icoPath != nullptr)
 			{
-				icon = rlRAII::Texture2DRAII(icoPath);
+				icon = rsc::SharedTexture2D(icoPath);
 			}
 		}
 
@@ -71,10 +71,10 @@ namespace ui
 		{
 			if (fontPath != nullptr)
 			{
-				font = rlRAII::FontRAII(fontPath);
+				font = rsc::SharedFont(fontPath);
 			}
 		}
-		ButtonCom(const Vector2 pos, const float width, const float height, const int fontSize, const Color textColor, const Color color, std::string text, rlRAII::FontRAII font) :
+		ButtonCom(const Vector2 pos, const float width, const float height, const int fontSize, const Color textColor, const Color color, std::string text, rsc::SharedFont font) :
 			x(pos.x), y(pos.y), width(width), height(height), fontSize(fontSize), color(color), isIcon(false), textColor(textColor), text(text), font(font) {}
 
 
@@ -94,11 +94,11 @@ namespace ui
 	private:
 		Color color;
 		Color textColor;
-		rlRAII::Texture2DRAII icon;
+		rsc::SharedTexture2D icon;
 
 		Vector2 pos;
 		Vector2 covered;
-		rlRAII::FontRAII font;
+		rsc::SharedFont font;
 		std::string text;
 		bool isIcon;
 		int fontSize;
@@ -224,7 +224,7 @@ namespace ui
 	struct ImageBoxCom
 	{
 		Vector2 pos;
-		rlRAII::Texture2DRAII img;
+		rsc::SharedTexture2D img;
 	};
 
 	class ImageBoxDraw : public ecs::DrawBase
@@ -270,7 +270,7 @@ namespace ui
 	struct TextBoxCom
 	{
 		Vector2 pos;
-		rlRAII::FontRAII font;
+		rsc::SharedFont font;
 		std::string text;
 		Color textColor;
 		int fontSize;
@@ -329,16 +329,16 @@ namespace ui
 	private:
 		friend class ButtonExDraw;
 		friend class ButtonExSystem;
-		rlRAII::FontRAII font;
+		rsc::SharedFont font;
 		std::string fontPath;
 
 		std::string text;
 		int textSize;
 
 	public:
-		rlRAII::Texture2DRAII baseIcon;
-		rlRAII::Texture2DRAII hoverIcon;
-		rlRAII::Texture2DRAII pressIcon;
+		rsc::SharedTexture2D baseIcon;
+		rsc::SharedTexture2D hoverIcon;
+		rsc::SharedTexture2D pressIcon;
 
 		Color textColor;
 		int spacing;
@@ -356,10 +356,10 @@ namespace ui
 
 		ButtonExCom
 		(
-			rlRAII::FileRAII fontData,
-			rlRAII::Texture2DRAII baseIcon,
-			rlRAII::Texture2DRAII hoverIcon,
-			rlRAII::Texture2DRAII pressIcon,
+			rsc::SharedFile fontData,
+			rsc::SharedTexture2D baseIcon,
+			rsc::SharedTexture2D hoverIcon,
+			rsc::SharedTexture2D pressIcon,
 
 			std::string text,
 			Color textColor,
@@ -373,22 +373,22 @@ namespace ui
 		) : fontPath(fontPath), baseIcon(baseIcon), hoverIcon(hoverIcon), pressIcon(pressIcon), text(text), textColor(textColor),
 			textSize(textSize), spacing(spacing), pos(pos), coverage(coverage), layerDepth(layerDepth), press(false), iconScale(iconScale), touch(false)
 		{
-			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), textSize * 2.0f));
+			font = rsc::SharedFont(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), textSize * 2.0f));
 		}
 
-		void resetText(const char* newText, rlRAII::FileRAII newFont, float newSize)
+		void resetText(const char* newText, rsc::SharedFile newFont, float newSize)
 		{
 			text = newText;
 			textSize = newSize;
-			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(newText, newFont.fileName(), newFont.get(), newFont.size(), newSize * 2.0f));
+			font = rsc::SharedFont(DynamicLoadFontFromMemory(newText, newFont.fileName(), newFont.get(), newFont.size(), newSize * 2.0f));
 		}
 	};
 
 	class ButtonExDraw : public ecs::DrawBase
 	{
 	private:
-		rlRAII::FontRAII font;
-		rlRAII::Texture2DRAII icon;
+		rsc::SharedFont font;
+		rsc::SharedTexture2D icon;
 		std::string text;
 		Color textColor;
 		int fontSize;
@@ -398,7 +398,7 @@ namespace ui
 		float iconScale;
 
 	public:
-		ButtonExDraw(const ButtonExCom button, rlRAII::TextureRAII icon) :
+		ButtonExDraw(const ButtonExCom button, rsc::SharedTexture icon) :
 			font(button.font), icon(icon), text(button.text), textColor(button.textColor), fontSize(button.textSize),
 			spacing(button.spacing), pos(button.pos), coverage(button.coverage), iconScale(button.iconScale) { }
 
@@ -423,7 +423,7 @@ namespace ui
 		ecs::MessageTypeId pressTypeId;
 		ecs::MessageTypeId releaseTypeId;
 
-		rlRAII::RenderTexture2DRAII rt;
+		rsc::SharedRenderTexture2D rt;
 
 	public:
 		ButtonExSystem(ecs::DoubleComs<ButtonExCom>* buttons, ecs::Layers* uiLayer, ecs::MessageManager* msgMgr) : buttons(*buttons), uiLayer(*uiLayer), msgMgr(*msgMgr)
@@ -527,9 +527,9 @@ namespace ui
 		friend class TextBoxExSystem;
 		std::string text;
 
-		rlRAII::FontRAII font;
+		rsc::SharedFont font;
 		float textSize;
-		rlRAII::FileRAII fontData;
+		rsc::SharedFile fontData;
 
 		bool initialized;
 
@@ -543,7 +543,7 @@ namespace ui
 		
 		TextBoxExCom
 		(
-			rlRAII::FileRAII fontData,
+			rsc::SharedFile fontData,
 			std::string text,
 			Vector2 position,
 			Color textColor,
@@ -553,23 +553,23 @@ namespace ui
 			float rotation = 0
 		) : fontData(fontData), text(text), position(position), textColor(textColor), textSize(textSize), spacing(spacing), rotation(rotation), layerDepth(layerDepth), initialized(false)
 		{
-			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), textSize));
+			font = rsc::SharedFont(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), textSize));
 		}
 
 		void resetText(const char* newText)
 		{
 			text = newText;
-			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(newText, fontData.fileName(), fontData.get(), fontData.size(), textSize * 2.0f));
+			font = rsc::SharedFont(DynamicLoadFontFromMemory(newText, fontData.fileName(), fontData.get(), fontData.size(), textSize * 2.0f));
 		}
-		void resetFont(rlRAII::FileRAII newFont)
+		void resetFont(rsc::SharedFile newFont)
 		{
 			fontData = newFont;
-			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), textSize * 2.0f));
+			font = rsc::SharedFont(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), textSize * 2.0f));
 		}
 		void resetFontSize(float newFontSize)
 		{
 			textSize = newFontSize;
-			font = rlRAII::FontRAII(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), textSize * 2.0f));
+			font = rsc::SharedFont(DynamicLoadFontFromMemory(text.c_str(), fontData.fileName(), fontData.get(), fontData.size(), textSize * 2.0f));
 		}
 
 
@@ -580,7 +580,7 @@ namespace ui
 	private:
 		std::string text;
 
-		rlRAII::FontRAII font;
+		rsc::SharedFont font;
 		float textSize;
 		Vector2 position;
 
@@ -742,10 +742,10 @@ namespace ui
 		Color trackColor;
 		Color thumbColor;
 
-		rlRAII::Texture2DRAII thumbTexture;
-		rlRAII::Texture2DRAII trackTexture;
+		rsc::SharedTexture2D thumbTexture;
+		rsc::SharedTexture2D trackTexture;
 
-		SliderCom(float length, float value, float scale, int graduation, Vector2 pos, Color trackColor, Color thumbColor, rlRAII::Texture2DRAII thumbTexture, rlRAII::Texture2DRAII trackTexture, int layerDepth) :
+		SliderCom(float length, float value, float scale, int graduation, Vector2 pos, Color trackColor, Color thumbColor, rsc::SharedTexture2D thumbTexture, rsc::SharedTexture2D trackTexture, int layerDepth) :
 			length(length), graduation(graduation), pos(pos), trackColor(trackColor), thumbColor(thumbColor), thumbTexture(thumbTexture),
 			trackTexture(trackTexture), layerDepth(layerDepth), value(value), pressCount(0.0f), hoverCount(0.0f), press(false), scale(scale)
 		{}
@@ -876,7 +876,7 @@ namespace ui
 	{
 		Vector2 pos;
 		float scale;
-		rlRAII::Texture2DRAII img;
+		rsc::SharedTexture2D img;
 		int layerDepth;
 	};
 
@@ -885,10 +885,10 @@ namespace ui
 	private:
 		Vector2 pos;
 		float scale;
-		rlRAII::Texture2DRAII img;
+		rsc::SharedTexture2D img;
 
 	public:
-		ImageBoxExDraw(const Vector2 pos, const float scale, const rlRAII::Texture2DRAII& img) : pos(pos), scale(scale), img(img) {}
+		ImageBoxExDraw(const Vector2 pos, const float scale, const rsc::SharedTexture2D& img) : pos(pos), scale(scale), img(img) {}
 
 		void draw() override
 		{

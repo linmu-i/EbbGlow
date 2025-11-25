@@ -3,17 +3,17 @@
 #include <raylib.h>
 #include <raymath.h>
 
-namespace rlRAII
+namespace resource
 {
-	class ImageRAII
+	class SharedImage
 	{
 	private:
 		Image image;
 		size_t* ref;
 
 	public:
-		ImageRAII() noexcept : image({}), ref(nullptr) {}
-		ImageRAII(const char* imagePath) noexcept
+		SharedImage() noexcept : image({}), ref(nullptr) {}
+		SharedImage(const char* imagePath) noexcept
 		{
 			image = LoadImage(imagePath);
 			if (image.data == nullptr)
@@ -30,7 +30,7 @@ namespace rlRAII
 				}
 			}
 		}
-		ImageRAII(const Image img)
+		SharedImage(const Image img)
 		{
 			if (img.data == nullptr)
 			{
@@ -48,7 +48,7 @@ namespace rlRAII
 				}
 			}
 		}
-		ImageRAII(const ImageRAII& other) : image(other.image), ref(other.ref)
+		SharedImage(const SharedImage& other) : image(other.image), ref(other.ref)
 		{
 			if (ref)
 			{
@@ -56,12 +56,12 @@ namespace rlRAII
 			}
 
 		}
-		ImageRAII(ImageRAII&& other) noexcept : image(other.image), ref(other.ref)
+		SharedImage(SharedImage&& other) noexcept : image(other.image), ref(other.ref)
 		{
 			other.image = {};
 			other.ref = nullptr;
 		}
-		~ImageRAII()
+		~SharedImage()
 		{
 			if (ref)
 			{
@@ -75,7 +75,7 @@ namespace rlRAII
 				}
 			}
 		}
-		ImageRAII& operator=(const ImageRAII& other)
+		SharedImage& operator=(const SharedImage& other)
 		{
 			if (&other == this)
 			{
@@ -98,7 +98,7 @@ namespace rlRAII
 			}
 			return *this;
 		}
-		ImageRAII& operator=(ImageRAII&& other) noexcept
+		SharedImage& operator=(SharedImage&& other) noexcept
 		{
 			if (&other == this)
 			{
@@ -137,16 +137,16 @@ namespace rlRAII
 		}
 	};
 
-	class TextureRAII
+	class SharedTexture
 	{
 	private:
 		Texture2D texture;
 		size_t* ref;
 
 	public:
-		TextureRAII() noexcept : texture({}), ref(nullptr) {}
+		SharedTexture() noexcept : texture({}), ref(nullptr) {}
 
-		TextureRAII(const char* texturePath) noexcept
+		SharedTexture(const char* texturePath) noexcept
 		{
 			texture = LoadTexture(texturePath);
 			if (texture.id == 0)
@@ -164,7 +164,7 @@ namespace rlRAII
 			}
 		}
 
-		TextureRAII(const Texture texture)
+		SharedTexture(const Texture texture)
 		{
 			if (texture.id == 0)
 			{
@@ -183,7 +183,7 @@ namespace rlRAII
 			}
 		}
 
-		TextureRAII(const TextureRAII& other) : texture(other.texture), ref(other.ref)
+		SharedTexture(const SharedTexture& other) : texture(other.texture), ref(other.ref)
 		{
 			if (ref)
 			{
@@ -191,14 +191,14 @@ namespace rlRAII
 			}
 		}
 
-		TextureRAII(TextureRAII&& other) noexcept
+		SharedTexture(SharedTexture&& other) noexcept
 			: texture(other.texture), ref(other.ref)
 		{
 			other.texture = {};
 			other.ref = nullptr;
 		}
 
-		~TextureRAII()
+		~SharedTexture()
 		{
 			if (ref)
 			{
@@ -213,7 +213,7 @@ namespace rlRAII
 			}
 		}
 
-		TextureRAII& operator=(const TextureRAII& other)
+		SharedTexture& operator=(const SharedTexture& other)
 		{
 			if (&other == this)
 			{
@@ -237,7 +237,7 @@ namespace rlRAII
 			return *this;
 		}
 
-		TextureRAII& operator=(TextureRAII&& other) noexcept
+		SharedTexture& operator=(SharedTexture&& other) noexcept
 		{
 			if (&other == this)
 			{
@@ -280,18 +280,18 @@ namespace rlRAII
 		}
 	};
 
-	using Texture2DRAII = TextureRAII;
+	using SharedTexture2D = SharedTexture;
 
-	class FontRAII
+	class SharedFont
 	{
 	private:
 		Font font;
 		size_t* ref;
 
 	public:
-		FontRAII() noexcept : font({}), ref(nullptr) {}
+		SharedFont() noexcept : font({}), ref(nullptr) {}
 
-		FontRAII(const char* fontPath) noexcept
+		SharedFont(const char* fontPath) noexcept
 		{
 			if (fontPath == nullptr)
 			{
@@ -315,7 +315,7 @@ namespace rlRAII
 			}
 		}
 
-		FontRAII(const Font font)
+		SharedFont(const Font font)
 		{
 			if (font.texture.id == 0)
 			{
@@ -334,7 +334,7 @@ namespace rlRAII
 			}
 		}
 
-		FontRAII(const FontRAII& other) : font(other.font), ref(other.ref)
+		SharedFont(const SharedFont& other) : font(other.font), ref(other.ref)
 		{
 			if (ref)
 			{
@@ -342,14 +342,14 @@ namespace rlRAII
 			}
 		}
 
-		FontRAII(FontRAII&& other) noexcept
+		SharedFont(SharedFont&& other) noexcept
 			: font(other.font), ref(other.ref)
 		{
 			other.font = {};
 			other.ref = nullptr;
 		}
 
-		~FontRAII()
+		~SharedFont()
 		{
 			if (ref)
 			{
@@ -364,7 +364,7 @@ namespace rlRAII
 			}
 		}
 
-		FontRAII& operator=(const FontRAII& other)
+		SharedFont& operator=(const SharedFont& other)
 		{
 			if (&other == this)
 			{
@@ -388,7 +388,7 @@ namespace rlRAII
 			return *this;
 		}
 
-		FontRAII& operator=(FontRAII&& other) noexcept
+		SharedFont& operator=(SharedFont&& other) noexcept
 		{
 			if (&other == this)
 			{
@@ -433,16 +433,16 @@ namespace rlRAII
 
 
 
-	class MusicRAII
+	class SharedMusic
 	{
 	private:
 		Music music;
 		size_t* ref;
 		
 	public:
-		MusicRAII() noexcept : music({}), ref(nullptr) {}
+		SharedMusic() noexcept : music({}), ref(nullptr) {}
 
-		MusicRAII(const MusicRAII& other) noexcept
+		SharedMusic(const SharedMusic& other) noexcept
 		{
 			if (other.ref != nullptr)
 			{
@@ -457,13 +457,13 @@ namespace rlRAII
 			}
 		}
 
-		MusicRAII(MusicRAII&& other) noexcept : music(other.music), ref(other.ref)
+		SharedMusic(SharedMusic&& other) noexcept : music(other.music), ref(other.ref)
 		{
 			other.music = {};
 			other.ref = nullptr;
 		}
 
-		MusicRAII(const char* musicPath) noexcept
+		SharedMusic(const char* musicPath) noexcept
 		{
 			music = LoadMusicStream(musicPath);
 			if (IsMusicValid(music))
@@ -481,7 +481,7 @@ namespace rlRAII
 			}
 		}
 
-		MusicRAII(const Music otherMusic) noexcept
+		SharedMusic(const Music otherMusic) noexcept
 		{
 			if (IsMusicValid(otherMusic))
 			{
@@ -500,7 +500,7 @@ namespace rlRAII
 			}
 		}
 
-		MusicRAII& operator=(const MusicRAII& other) noexcept
+		SharedMusic& operator=(const SharedMusic& other) noexcept
 		{
 			if (other.ref == ref)
 			{
@@ -528,7 +528,7 @@ namespace rlRAII
 			}
 		}
 
-		MusicRAII& operator=(MusicRAII&& other) noexcept
+		SharedMusic& operator=(SharedMusic&& other) noexcept
 		{
 			if (&other == this)
 			{
@@ -549,7 +549,7 @@ namespace rlRAII
 			other.ref = nullptr;
 		}
 
-		~MusicRAII()
+		~SharedMusic()
 		{
 			if (ref != nullptr)
 			{
@@ -582,16 +582,16 @@ namespace rlRAII
 
 
 
-	class ShaderRAII
+	class SharedShader
 	{
 	private:
 		Shader shader;
 		size_t* ref;
 
 	public:
-		ShaderRAII() noexcept : shader({}), ref(nullptr) {}
+		SharedShader() noexcept : shader({}), ref(nullptr) {}
 
-		ShaderRAII(const ShaderRAII& other) noexcept
+		SharedShader(const SharedShader& other) noexcept
 		{
 			if (other.ref != nullptr)
 			{
@@ -606,13 +606,13 @@ namespace rlRAII
 			}
 		}
 
-		ShaderRAII(ShaderRAII&& other) noexcept : shader(other.shader), ref(other.ref)
+		SharedShader(SharedShader&& other) noexcept : shader(other.shader), ref(other.ref)
 		{
 			other.shader = {};
 			other.ref = nullptr;
 		}
 
-		ShaderRAII(const char* shaderPath) noexcept
+		SharedShader(const char* shaderPath) noexcept
 		{
 			shader = LoadShader(0,shaderPath);
 			if (IsShaderValid(shader))
@@ -630,7 +630,7 @@ namespace rlRAII
 			}
 		}
 
-		ShaderRAII(const Shader otherShader) noexcept
+		SharedShader(const Shader otherShader) noexcept
 		{
 			if (IsShaderValid(otherShader))
 			{
@@ -649,7 +649,7 @@ namespace rlRAII
 			}
 		}
 
-		ShaderRAII& operator=(const ShaderRAII& other) noexcept
+		SharedShader& operator=(const SharedShader& other) noexcept
 		{
 			if (other.ref == ref)
 			{
@@ -677,7 +677,7 @@ namespace rlRAII
 			}
 		}
 
-		ShaderRAII& operator=(ShaderRAII&& other) noexcept
+		SharedShader& operator=(SharedShader&& other) noexcept
 		{
 			if (&other == this)
 			{
@@ -699,7 +699,7 @@ namespace rlRAII
 			return *this;
 		}
 
-		~ShaderRAII()
+		~SharedShader()
 		{
 			if (ref != nullptr)
 			{
@@ -730,7 +730,7 @@ namespace rlRAII
 		}
 	};
 
-	class FileRAII
+	class SharedFile
 	{
 	private:
 		unsigned char* fileData;
@@ -749,8 +749,8 @@ namespace rlRAII
 		public:
 			Iterator() : fileSize(0), offset(0), pointer(nullptr) {}
 			Iterator(size_t size, unsigned char* data, int64_t offset = 0) : fileSize(size), pointer(data), offset(offset) {}
-			Iterator(FileRAII file) : fileSize(file.dataSize), pointer(file.fileData), offset(0) {}
-			Iterator(FileRAII file, int64_t offset) : fileSize(file.dataSize), pointer(file.fileData + offset), offset(offset) {}
+			Iterator(SharedFile file) : fileSize(file.dataSize), pointer(file.fileData), offset(0) {}
+			Iterator(SharedFile file, int64_t offset) : fileSize(file.dataSize), pointer(file.fileData + offset), offset(offset) {}
 
 			Iterator(const Iterator& other) : fileSize(other.fileSize), offset(other.offset), pointer(other.pointer) {}
 			Iterator(Iterator&& other) noexcept : fileSize(other.fileSize), offset(other.offset), pointer(other.pointer)
@@ -977,27 +977,27 @@ namespace rlRAII
 			}
 		};
 
-		FileRAII() noexcept : ref(nullptr), fileData(nullptr), dataSize(0), name(nullptr) {}
-		FileRAII(const char* filePath) : ref(new(std::nothrow) size_t(1))
+		SharedFile() noexcept : ref(nullptr), fileData(nullptr), dataSize(0), name(nullptr) {}
+		SharedFile(const char* filePath) : ref(new(std::nothrow) size_t(1))
 		{
 			name = new(std::nothrow) char[strlen(filePath) + 1];
 			strcpy(name, filePath);
 			fileData = LoadFileData(filePath, &dataSize);
 		}
-		FileRAII(unsigned char* fileData, int dataSize, const char* name) noexcept : ref(new(std::nothrow) size_t(1)), fileData(fileData), dataSize(dataSize)
+		SharedFile(unsigned char* fileData, int dataSize, const char* name) noexcept : ref(new(std::nothrow) size_t(1)), fileData(fileData), dataSize(dataSize)
 		{
 			this->name = new(std::nothrow) char[strlen(name) + 1];
 			strcpy(this->name, name);
 		}
 		
-		FileRAII(const FileRAII& other) noexcept : fileData(other.fileData), ref(other.ref), dataSize(other.dataSize), name(other.name)
+		SharedFile(const SharedFile& other) noexcept : fileData(other.fileData), ref(other.ref), dataSize(other.dataSize), name(other.name)
 		{
 			if (ref)
 			{
 				++(*ref);
 			}
 		}
-		FileRAII(FileRAII&& other) noexcept : fileData(other.fileData), ref(other.ref), dataSize(other.dataSize), name(other.name)
+		SharedFile(SharedFile&& other) noexcept : fileData(other.fileData), ref(other.ref), dataSize(other.dataSize), name(other.name)
 		{
 			other.fileData = nullptr;
 			other.ref = nullptr;
@@ -1005,7 +1005,7 @@ namespace rlRAII
 			other.dataSize = 0;
 		}
 
-		FileRAII& operator=(const FileRAII& other) noexcept
+		SharedFile& operator=(const SharedFile& other) noexcept
 		{
 			if (ref == other.ref)
 			{
@@ -1031,7 +1031,7 @@ namespace rlRAII
 			}
 			return *this;
 		}
-		FileRAII& operator=(FileRAII&& other) noexcept
+		SharedFile& operator=(SharedFile&& other) noexcept
 		{
 			if (ref == other.ref)
 			{
@@ -1058,7 +1058,7 @@ namespace rlRAII
 			return *this;
 		}
 
-		~FileRAII() noexcept
+		~SharedFile() noexcept
 		{
 			if (ref)
 			{
@@ -1111,16 +1111,16 @@ namespace rlRAII
 		}
 	};
 
-	class RenderTextureRAII
+	class SharedRenderTexture
 	{
 	private:
 		RenderTexture renderTexture;
 		size_t* ref;
 
 	public:
-		RenderTextureRAII() noexcept : renderTexture({}), ref(nullptr) {}
+		SharedRenderTexture() noexcept : renderTexture({}), ref(nullptr) {}
 
-		RenderTextureRAII(const RenderTextureRAII& other) noexcept
+		SharedRenderTexture(const SharedRenderTexture& other) noexcept
 		{
 			if (other.ref)
 			{
@@ -1135,13 +1135,13 @@ namespace rlRAII
 			}
 		}
 
-		RenderTextureRAII(RenderTextureRAII&& other) noexcept : renderTexture(other.renderTexture), ref(other.ref)
+		SharedRenderTexture(SharedRenderTexture&& other) noexcept : renderTexture(other.renderTexture), ref(other.ref)
 		{
 			other.renderTexture = {};
 			other.ref = nullptr;
 		}
 
-		RenderTextureRAII(int x, int y) noexcept
+		SharedRenderTexture(int x, int y) noexcept
 		{
 			renderTexture = LoadRenderTexture(x, y);
 			if (IsRenderTextureValid(renderTexture))
@@ -1159,7 +1159,7 @@ namespace rlRAII
 			}
 		}
 
-		RenderTextureRAII(const RenderTexture otherRenderTexture) noexcept
+		SharedRenderTexture(const RenderTexture otherRenderTexture) noexcept
 		{
 			if (IsRenderTextureValid(otherRenderTexture))
 			{
@@ -1178,7 +1178,7 @@ namespace rlRAII
 			}
 		}
 
-		RenderTextureRAII& operator=(const RenderTextureRAII& other) noexcept
+		SharedRenderTexture& operator=(const SharedRenderTexture& other) noexcept
 		{
 			if (other.ref == ref)
 			{
@@ -1206,7 +1206,7 @@ namespace rlRAII
 			}
 		}
 
-		RenderTextureRAII& operator=(RenderTextureRAII&& other) noexcept
+		SharedRenderTexture& operator=(SharedRenderTexture&& other) noexcept
 		{
 			if (&other == this)
 			{
@@ -1228,7 +1228,7 @@ namespace rlRAII
 			return *this;
 		}
 
-		~RenderTextureRAII()
+		~SharedRenderTexture()
 		{
 			if (ref)
 			{
@@ -1259,18 +1259,18 @@ namespace rlRAII
 		}
 	};
 
-	typedef RenderTextureRAII RenderTexture2DRAII;
+	typedef SharedRenderTexture SharedRenderTexture2D;
 
-	class SoundRAII
+	class SharedSound
 	{
 	private:
 		Sound sound;
 		size_t* ref;
 
 	public:
-		SoundRAII() noexcept : sound({}), ref(nullptr) {}
+		SharedSound() noexcept : sound({}), ref(nullptr) {}
 
-		SoundRAII(const SoundRAII& other) noexcept
+		SharedSound(const SharedSound& other) noexcept
 		{
 			if (other.ref)
 			{
@@ -1285,13 +1285,13 @@ namespace rlRAII
 			}
 		}
 
-		SoundRAII(SoundRAII&& other) noexcept : sound(other.sound), ref(other.ref)
+		SharedSound(SharedSound&& other) noexcept : sound(other.sound), ref(other.ref)
 		{
 			other.sound = {};
 			other.ref = nullptr;
 		}
 
-		SoundRAII(const char* soundPath) noexcept
+		SharedSound(const char* soundPath) noexcept
 		{
 			sound = LoadSound(soundPath);
 			if (IsSoundValid(sound))
@@ -1309,7 +1309,7 @@ namespace rlRAII
 			}
 		}
 
-		SoundRAII(const Sound otherSound) noexcept
+		SharedSound(const Sound otherSound) noexcept
 		{
 			if (IsSoundValid(otherSound))
 			{
@@ -1328,7 +1328,7 @@ namespace rlRAII
 			}
 		}
 
-		SoundRAII& operator=(const SoundRAII& other) noexcept
+		SharedSound& operator=(const SharedSound& other) noexcept
 		{
 			if (other.ref == ref)
 			{
@@ -1356,7 +1356,7 @@ namespace rlRAII
 			}
 		}
 
-		SoundRAII& operator=(SoundRAII&& other) noexcept
+		SharedSound& operator=(SharedSound&& other) noexcept
 		{
 			if (&other == this)
 			{
@@ -1378,7 +1378,7 @@ namespace rlRAII
 			return *this;
 		}
 
-		~SoundRAII()
+		~SharedSound()
 		{
 			if (ref)
 			{
@@ -1409,3 +1409,5 @@ namespace rlRAII
 		}
 	};
 }
+
+namespace rsc = resource;
