@@ -29,6 +29,16 @@ TextScene("测试文本",
 		  "Test text.",
 		  "resource\\img\\backGround.png", @Cover)
 
+KeyFrameAnimation("resource\\img\\backGround.png", 6, @NotLoop)
+AddKeyFrame(0.5, 0.5, 0, 0,
+			0.5, 0, 0, 255, @Center)
+AddKeyFrame(0.25, 0.75, 0, 0,
+			1.0, 0, 0, 255, @Center)
+AddKeyFrame(0.25, 0.75, 0, 0,
+			1.0, 0, 0.5, 255, @Center)
+AddKeyFrame(0.5, 0.5, 0, 0,
+			0.5, 0, 0.5, 255, @Center)
+
 
 Scene sc_0_2(TextScene : sc_0_3)
 TextScene("\"这个脚本加载器似乎能跑起来？\"",

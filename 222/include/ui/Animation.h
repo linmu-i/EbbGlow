@@ -170,8 +170,16 @@ namespace ui
 		int layerDepth;
 		int activeFrame;
 		float timeCount;
+		float scale;
 		bool stop;
 		bool loop;
+
+		KeyFramesAnimationCom(rsc::SharedTexture2D texture, std::vector<KeyFrame> keyFrames, ecs::Layers* layer, float scale, int layerDepth, bool loop) :
+			texture(texture), keyFrames(keyFrames), layer(layer), layerDepth(layerDepth), loop(loop), activeFrame(0), timeCount(0.0f), stop(false), scale(scale) {
+		}
+		KeyFramesAnimationCom(rsc::SharedTexture2D texture, ecs::Layers* layer, float scale, int layerDepth, bool loop) :
+			texture(texture), keyFrames(), layer(layer), layerDepth(layerDepth), loop(loop), activeFrame(0), timeCount(0.0f), stop(false), scale(scale) {
+		}
 	};
 
 	class KeyFramesAnimationDraw : public ecs::DrawBase
@@ -217,16 +225,14 @@ namespace ui
 			(
 				[this](ecs::entity id, KeyFramesAnimationCom& activeCom)
 				{
-					if (activeCom.stop)
-					{
-						return;
-					}
+					
 					if (activeCom.keyFrames.size() == 0)
 					{
 						return;
 					}
 					auto& inactiveCom = *(coms.inactive()->get(id));
-
+					inactiveCom = activeCom;
+					
 					if (activeCom.activeFrame == 0)
 					{
 						(*(activeCom.layer))[activeCom.layerDepth].push_back
@@ -235,7 +241,7 @@ namespace ui
 							(
 								activeCom.keyFrames[0].position,
 								activeCom.keyFrames[0].origin,
-								activeCom.keyFrames[0].scale,
+								activeCom.keyFrames[0].scale * activeCom.scale,
 								activeCom.keyFrames[0].rotation,
 								activeCom.keyFrames[0].alpha,
 								activeCom.texture
@@ -252,26 +258,29 @@ namespace ui
 							(
 								activeCom.keyFrames[activeCom.activeFrame - 1].position + (activeCom.keyFrames[activeCom.activeFrame].position - activeCom.keyFrames[activeCom.activeFrame - 1].position) * deltaScale,
 								activeCom.keyFrames[activeCom.activeFrame].origin,
-								activeCom.keyFrames[activeCom.activeFrame - 1].scale + (activeCom.keyFrames[activeCom.activeFrame].scale - activeCom.keyFrames[activeCom.activeFrame - 1].scale) * deltaScale,
+								(activeCom.keyFrames[activeCom.activeFrame - 1].scale + (activeCom.keyFrames[activeCom.activeFrame].scale - activeCom.keyFrames[activeCom.activeFrame - 1].scale) * deltaScale) * activeCom.scale,
 								activeCom.keyFrames[activeCom.activeFrame - 1].rotation + (activeCom.keyFrames[activeCom.activeFrame].rotation - activeCom.keyFrames[activeCom.activeFrame - 1].rotation) * deltaScale,
 								activeCom.keyFrames[activeCom.activeFrame - 1].alpha + (activeCom.keyFrames[activeCom.activeFrame].alpha - activeCom.keyFrames[activeCom.activeFrame - 1].alpha) * deltaScale,
 								activeCom.texture
 							)
 						);
 					}
-					inactiveCom.timeCount = activeCom.timeCount + GetFrameTime();
-					if (inactiveCom.timeCount >= inactiveCom.keyFrames[inactiveCom.activeFrame].duration)
+					if (!activeCom.stop)
+					{
+						inactiveCom.timeCount += GetFrameTime();
+					}
+					if (inactiveCom.timeCount > inactiveCom.keyFrames[inactiveCom.activeFrame].duration)
 					{
 						inactiveCom.timeCount = 0.0f;
 						++inactiveCom.activeFrame;
 						if (inactiveCom.activeFrame >= inactiveCom.keyFrames.size())
 						{
-							inactiveCom.activeFrame = 0;
 							if (!activeCom.loop)
 							{
 								inactiveCom.stop = true;
-								activeCom.stop = true;
+								inactiveCom.timeCount = 0.0f;
 							}
+							inactiveCom.activeFrame = 0;
 						}
 					}
 				}

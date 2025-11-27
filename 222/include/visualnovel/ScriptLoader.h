@@ -548,13 +548,16 @@ namespace visualnovel
 				if (sceneType == "TextScene")
 				{
 					exIdList.push_back(world.getEntityManager()->getId());
-					CreateTextScene(texts, exIdList.back(), rsc::SharedTexture2D(bg.c_str()), readIt == cfg.readTextSet.end(), bgType);
+					char* ansi = LoadANSI(bg.c_str(), bg.size());
+					CreateTextScene(texts, exIdList.back(), rsc::SharedTexture2D(ansi), readIt == cfg.readTextSet.end(), bgType);
+					UnloadANSI(ansi);
 				}
 				else
 				{
-					auto idmgr = world.getEntityManager();
-					idList.push_back(idmgr->getId());
-					CreateTextScene(texts, idList.back(), rsc::SharedTexture2D(bg.c_str()), readIt == cfg.readTextSet.end(), bgType);
+					idList.push_back(world.getEntityManager()->getId());
+					char* ansi = LoadANSI(bg.c_str(), bg.size());
+					CreateTextScene(texts, idList.back(), rsc::SharedTexture2D(ansi), readIt == cfg.readTextSet.end(), bgType);
+					UnloadANSI(ansi);
 				}
 				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
 				++nextScene;
@@ -611,21 +614,25 @@ namespace visualnovel
 
 				ReadNextStateTag(alignment, nextScene);
 
-				ReadNextNumber(buf, nextScene);
-				textColor.r = std::stoi(buf);
-				ReadNextNumber(buf, nextScene);
-				textColor.g = std::stoi(buf);
-				ReadNextNumber(buf, nextScene);
-				textColor.b = std::stoi(buf);
-				ReadNextNumber(buf, nextScene);
-				textColor.a = std::stoi(buf);
+				textColor.r = GetNumber(nextScene, ',');
+				textColor.g = GetNumber(nextScene, ',');
+				textColor.b = GetNumber(nextScene, ',');
+				textColor.a = GetNumber(nextScene, ',');
 
-				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				normalImg = rsc::SharedTexture2D(LoadTexture(buf.c_str()));
-				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				hoverImg = rsc::SharedTexture2D(LoadTexture(buf.c_str()));
-				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				pressImg = rsc::SharedTexture2D(LoadTexture(buf.c_str()));
+				buf = GetString(nextScene);
+				char* ansi = LoadANSI(buf.c_str(), buf.size());
+				normalImg = rsc::SharedTexture2D(ansi);
+				UnloadANSI(ansi);
+
+				buf = GetString(nextScene);
+				ansi = LoadANSI(buf.c_str(), buf.size());
+				hoverImg = rsc::SharedTexture2D(ansi);
+				UnloadANSI(ansi);
+
+				buf = GetString(nextScene);
+				ansi = LoadANSI(buf.c_str(), buf.size());
+				pressImg = rsc::SharedTexture2D(ansi);
+				UnloadANSI(ansi);
 
 				float offsetX = cfg.ScreenWidth * relativeX, offsetY = cfg.ScreenHeight * relativeY;
 				float height = width / ratio;
@@ -698,8 +705,10 @@ namespace visualnovel
 				relativeY = GetNumber(nextScene, ',');
 				ratio = GetNumber(nextScene, ',');
 				width = GetNumber(nextScene, ',');
-				buf = GetString(nextScene);//ReadNextString(buf, nextScene);
-				img = rsc::SharedTexture2D(LoadTexture(buf.c_str()));
+				buf = GetString(nextScene);
+				char* ansi = LoadANSI(buf.c_str(), buf.size());
+				img = rsc::SharedTexture2D(LoadTexture(ansi));
+				UnloadANSI(ansi);
 				ReadNextStateTag(buf, nextScene);
 				if (buf == "Cover")
 				{
@@ -939,6 +948,66 @@ namespace visualnovel
 					idList.push_back(world.getEntityManager()->getId());
 					world.createUnit(idList.back(), ui::TextBoxExCom{ fontFile, text, Vector2{ float(offsetX), float(offsetY) } + cfg.drawOffset, Color{uint8_t(r), uint8_t(g), uint8_t(b), uint8_t(a)}, (int)round(layerDepth), float(textRelativeSize), float(textRelativeSize) * 0.1f });
 				}
+			}
+			else if (!memcmp(nextScene.get(), "KeyFrameAnimation", 17) && (nextScene[17] == '(' || isspace(nextScene[17])))
+			{
+				nextScene += 17;
+				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				std::string imgPath = GetString(nextScene);
+				char* imgPathAnsi = LoadANSI(imgPath.c_str(), imgPath.size());
+				rsc::SharedTexture2D img(imgPathAnsi);
+				UnloadANSI(imgPathAnsi);
+				float scale = cfg.ScreenWidth / 1920.0f;
+				int layerDepth = GetNumber(nextScene, ')');
+				std::string isLoop;
+				ReadNextStateTag(isLoop, nextScene);
+				idList.push_back(world.getEntityManager()->getId());
+				world.createUnit(idList.back(), ui::KeyFramesAnimationCom{ img, world.getUiLayer(), scale, layerDepth, isLoop == "Loop" ? true : false });
+				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+			}
+			else if (!memcmp(nextScene.get(), "AddKeyFrame", 11) && (nextScene[11] == '(' || isspace(nextScene[11])))
+			{
+				nextScene += 11;
+				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+
+				auto* animationActive = world.getDoubleBuffer<ui::KeyFramesAnimationCom>()->active()->get(idList.back());
+				auto* animationInactive = world.getDoubleBuffer<ui::KeyFramesAnimationCom>()->inactive()->get(idList.back());
+
+				if (animationActive && animationInactive)
+				{
+					ui::KeyFrame keyFrame;
+					float relativeX = GetNumber(nextScene, ',');
+					float relativeY = GetNumber(nextScene, ',');
+					float originX = GetNumber(nextScene, ',');
+					float originY = GetNumber(nextScene, ',');
+					float scale = GetNumber(nextScene, ',');
+					float rotation = GetNumber(nextScene, ',');
+					float duration = GetNumber(nextScene, ',');
+					uint8_t alpha = (uint8_t)round(GetNumber(nextScene, ','));
+					std::string state;
+					ReadNextStateTag(state, nextScene);
+					
+					keyFrame.origin = Vector2{ originX * animationActive->texture.get().width, originY * animationActive->texture.get().height};
+					keyFrame.duration = duration;
+					keyFrame.rotation = rotation;
+					keyFrame.scale = scale;
+					keyFrame.alpha = alpha;
+
+					if (state == "Center")
+					{
+						keyFrame.position = Vector2{ relativeX * cfg.ScreenWidth - animationActive->texture.get().width * animationActive->scale / 2.0f * scale, relativeY * cfg.ScreenHeight - animationActive->texture.get().height * animationActive->scale / 2.0f * scale };
+					}
+					else
+					{
+						keyFrame.position = Vector2{ relativeX * cfg.ScreenWidth, relativeY * cfg.ScreenHeight };
+					}
+					animationInactive->keyFrames.push_back(keyFrame);
+				}
+				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
+				++nextScene;
 			}
 			else if (!memcmp(nextScene.get(), "//", 2))
 			{

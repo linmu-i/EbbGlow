@@ -62,7 +62,10 @@ int main()
 	vn::ScriptLoader scLoader(main, "Script.txt", CFG);
 	auto task = scLoader.load();
 	vn::ApplyScriptLoader(main, scLoader, CFG);
-	
+	ui::ApplyKeyFramesAnimation(main);
+
+	auto animationId = main.getEntityManager()->getId();
+
 	task.get();
 	scLoader.start();
 
