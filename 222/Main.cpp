@@ -38,6 +38,7 @@ int main()
 	CFG.chrNameOffsetX = 0.5f;
 	CFG.mainLanguage = 0;
 	CFG.secondaryLanguage = 2;
+	CFG.volumes.push_back(0.8f);
 
 	auto ScX = GetScreenWidth();
 	auto ScY = GetScreenHeight();

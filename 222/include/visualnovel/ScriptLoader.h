@@ -108,14 +108,92 @@ namespace visualnovel
 		rsc::SharedSound voice;
 
 	public:
+		MusicManager(const VisualNovelConfig& config) : cfg(config) {}
+
 		void update() override
 		{
 			if (bgm.valid())
 			{
 				UpdateMusicStream(bgm.get());
 			}
-			
-			
+		}
+
+		void SetBGM(const rsc::SharedMusic& music, float volume)
+		{
+			if (bgm.valid())
+			{
+				StopMusicStream(bgm.get());
+			}
+			bgm = music;
+			if (bgm.valid())
+			{
+				SetMusicVolume(bgm.get(), volume);
+				PlayMusicStream(bgm.get());
+			}
+		}
+
+		void SetVoice(const rsc::SharedSound& sound, float volume)
+		{
+			if (voice.valid())
+			{
+				StopSound(voice.get());
+			}
+			voice = sound;
+			if (voice.valid())
+			{
+				SetSoundVolume(voice.get(), volume);
+				PlaySound(voice.get());
+			}
+		}
+
+		void StopBGM()
+		{
+			if (bgm.valid())
+			{
+				StopMusicStream(bgm.get());
+				bgm = rsc::SharedMusic();
+			}
+		}
+
+		void StopVoice()
+		{
+			if (voice.valid())
+			{
+				StopSound(voice.get());
+				voice = rsc::SharedSound();
+			}
+		}
+
+		void PauseBGM()
+		{
+			if (bgm.valid())
+			{
+				PauseMusicStream(bgm.get());
+			}
+		}
+
+		void ResumeBGM()
+		{
+			if (bgm.valid())
+			{
+				ResumeMusicStream(bgm.get());
+			}
+		}
+
+		void PauseVoice()
+		{
+			if (voice.valid())
+			{
+				PauseSound(voice.get());
+			}
+		}
+
+		void ResumeVoice()
+		{
+			if (voice.valid())
+			{
+				ResumeSound(voice.get());
+			}
 		}
 	};
 
@@ -169,6 +247,8 @@ namespace visualnovel
 		};
 		std::unordered_map<std::string, VariableView> variables;
 
+		friend void ApplyScriptLoader(ecs::World2D&, ScriptLoader&, VisualNovelConfig&);
+		MusicManager* mscMgr = nullptr;
 		
 
 		void CreateTextScene(const std::vector<std::string>& languages, ecs::entity textBoxId, rsc::SharedTexture2D backGround, bool read, BackgroundDrawType drawType)
@@ -1009,6 +1089,34 @@ namespace visualnovel
 				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
 				++nextScene;
 			}
+			else if (!memcmp(nextScene.get(), "SetBGM", 6) && (nextScene[6] == '(' || isspace(nextScene[6])))
+			{
+				nextScene += 6;
+				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				auto path = GetString(nextScene);
+				char* ansi = LoadANSI(path.c_str(), path.size());
+				rsc::SharedMusic bgm(ansi);
+				UnloadANSI(ansi);
+				int volumeIdx = (int)round(GetNumber(nextScene, ')'));
+				mscMgr->SetBGM(bgm, cfg.volumes[volumeIdx]);
+				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+			}
+			else if (!memcmp(nextScene.get(), "SetVoice", 8) && (nextScene[8] == '(' || isspace(nextScene[6])))
+			{
+				nextScene += 8;
+				while (*nextScene != '(' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				auto path = GetString(nextScene);
+				char* ansi = LoadANSI(path.c_str(), path.size());
+				rsc::SharedSound voice(ansi);
+				UnloadANSI(ansi);
+				int volumeIdx = (int)round(GetNumber(nextScene, ')'));
+				mscMgr->SetVoice(voice, cfg.volumes[volumeIdx]);
+				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
+				++nextScene;
+			}
 			else if (!memcmp(nextScene.get(), "//", 2))
 			{
 				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
@@ -1355,5 +1463,7 @@ namespace visualnovel
 		world.addSystem(SelectSceneSystem(world, scriptLoader));
 		world.addPool<DelaySceneCom>();
 		world.addSystem(DelaySceneSystem(world, scriptLoader));
+		world.addSystem(MusicManager(cfg));
+		scriptLoader.mscMgr = world.getSystem<MusicManager>();
 	}
 }

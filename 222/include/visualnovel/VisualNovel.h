@@ -36,6 +36,7 @@ namespace visualnovel
 			constexpr static int ButtonLayer = 6;
 		} LayerDefine;
 		
+		std::vector<float> volumes;
 
 		bool showReadText = false;
 		Color readTextColor = WHITE;
