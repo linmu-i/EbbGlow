@@ -33,17 +33,6 @@ namespace ui
 				framesSequence.push_back(framesPath[i].c_str());
 			}
 		}
-		/*
-		AnimationCom& operator=(const AnimationCom& other)
-		{
-			framesSequence = other.framesSequence;
-			frameTime = other.frameTime;
-			activeFrame = other.activeFrame;
-			frameTimeCount = frameTimeCount;
-			loop = other.loop;
-			stop = other.stop;
-			position
-		}*/
 	};
 
 	class AnimationDraw : public ecs::DrawBase
@@ -269,18 +258,26 @@ namespace ui
 					{
 						inactiveCom.timeCount += GetFrameTime();
 					}
-					if (inactiveCom.timeCount > inactiveCom.keyFrames[inactiveCom.activeFrame].duration)
+					if (activeCom.timeCount > activeCom.keyFrames[activeCom.activeFrame].duration)
 					{
-						inactiveCom.timeCount = 0.0f;
-						++inactiveCom.activeFrame;
-						if (inactiveCom.activeFrame >= inactiveCom.keyFrames.size())
+						
+						if (inactiveCom.activeFrame >= activeCom.keyFrames.size() - 1)
 						{
 							if (!activeCom.loop)
 							{
 								inactiveCom.stop = true;
-								inactiveCom.timeCount = 0.0f;
+								inactiveCom.activeFrame = activeCom.keyFrames.size() - 1;
 							}
-							inactiveCom.activeFrame = 0;
+							else
+							{
+								inactiveCom.timeCount = 0.0f;
+								inactiveCom.activeFrame = 0;
+							}
+						}
+						else
+						{
+							inactiveCom.timeCount = 0.0f;
+							++inactiveCom.activeFrame;
 						}
 					}
 				}

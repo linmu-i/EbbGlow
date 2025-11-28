@@ -39,6 +39,7 @@ int main()
 	CFG.mainLanguage = 0;
 	CFG.secondaryLanguage = 2;
 	CFG.volumes.push_back(0.8f);
+	CFG.secondLanguageShow = false;
 
 	auto ScX = GetScreenWidth();
 	auto ScY = GetScreenHeight();

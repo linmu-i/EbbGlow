@@ -45,6 +45,8 @@ namespace visualnovel
 		float drawRatio = 0.0f;
 		Vector2 drawOffset = { 0,0 };
 
+		bool secondLanguageShow = true;
+
 	};
 	
 	const Vector2 StandardTextBoxDefaultPosition = { GetScreenWidth() / 6, GetScreenHeight() / 3 * 2};
@@ -69,6 +71,7 @@ namespace visualnovel
 		float totalHeightL1;
 
 		int totalPixel;
+		int totalPixelL0;
 		int activePixel = 0;
 
 		float speed;
@@ -85,7 +88,7 @@ namespace visualnovel
 			std::vector<std::vector<int>> t0 = TextLineCaculateWithWordWrap(textL0.c_str(), textSize, spacing, font.get(), width);//主文本占2/3屏，1280px
 			
 			totalPixel = 0;
-
+			totalPixelL0 = 0;
 
 
 			for (auto& s : t0)
@@ -127,6 +130,7 @@ namespace visualnovel
 			for (auto& t : this->textL0)
 			{
 				totalPixel += t.get().width;
+				totalPixelL0 += t.get().width;
 			}
 			for (auto& t : this->textL1)
 			{
@@ -158,9 +162,10 @@ namespace visualnovel
 		ecs::Layers* layers;
 		int layerDepth;
 		rsc::SharedRenderTexture2D textureTmp;
+		const VisualNovelConfig& cfg;
 
 	public:
-		StandardTextBoxSystem(ecs::DoubleComs<StandardTextBox>* textBoxs, ecs::Layers* layers, int layerDepth, const VisualNovelConfig& cfg) : textBoxs(textBoxs), layers(layers), layerDepth(layerDepth), textureTmp(LoadRenderTexture(cfg.ScreenWidth, cfg.ScreenHeight)) {}
+		StandardTextBoxSystem(ecs::DoubleComs<StandardTextBox>* textBoxs, ecs::Layers* layers, int layerDepth, const VisualNovelConfig& cfg) : textBoxs(textBoxs), layers(layers), layerDepth(layerDepth), textureTmp(LoadRenderTexture(cfg.ScreenWidth, cfg.ScreenHeight)), cfg(cfg) {}
 
 		void update() override
 		{
@@ -207,18 +212,26 @@ namespace visualnovel
 								activePixel0 = 0;
 							}
 						}
-						for (int activeLine = 0; activeLine < comActive.textL1.size() && activePixel1; ++activeLine)
+						if (cfg.secondLanguageShow)
 						{
-							if (activePixel1 >= comActive.textL1[activeLine].get().width)
+							for (int activeLine = 0; activeLine < comActive.textL1.size() && activePixel1; ++activeLine)
 							{
-								DrawTextureRec(comActive.textL1[activeLine].get(), { 0, 0, float(comActive.textL1[activeLine].get().width), -float(comActive.textL1[activeLine].get().height) }, { 0, float(spacing * activeLine + spacing * comActive.textL0.size()) }, WHITE);
-								activePixel1 -= comActive.textL1[activeLine].get().width;
+								if (activePixel1 >= comActive.textL1[activeLine].get().width)
+								{
+									DrawTextureRec(comActive.textL1[activeLine].get(), { 0, 0, float(comActive.textL1[activeLine].get().width), -float(comActive.textL1[activeLine].get().height) }, { 0, float(spacing * activeLine + spacing * comActive.textL0.size()) }, WHITE);
+									activePixel1 -= comActive.textL1[activeLine].get().width;
+								}
+								else
+								{
+									DrawTextureRec(comActive.textL1[activeLine].get(), { 0, 0, float(activePixel1), -float(comActive.textL1[activeLine].get().height) }, { 0, float(spacing * activeLine + spacing * comActive.textL0.size()) }, WHITE);
+									activePixel1 = 0;
+								}
 							}
-							else
-							{
-								DrawTextureRec(comActive.textL1[activeLine].get(), { 0, 0, float(activePixel1), -float(comActive.textL1[activeLine].get().height) }, { 0, float(spacing * activeLine + spacing * comActive.textL0.size()) }, WHITE);
-								activePixel1 = 0;
-							}
+						}
+						else if (comActive.activePixel > comActive.totalPixelL0)
+						{
+							comInactive.drawing = false;
+							comInactive.activePixel = comActive.totalPixel + 11;
 						}
 						EndTextureMode();
 					}

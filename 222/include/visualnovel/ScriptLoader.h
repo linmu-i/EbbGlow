@@ -474,7 +474,7 @@ namespace visualnovel
 			{
 				++nextScene;
 				std::string varName;
-				while (!isspace(*nextScene) && *nextScene != '[' && !nextScene.eof())
+				while (!isspace(*nextScene) && *nextScene != '[' && *nextScene != ',' && !nextScene.eof())
 				{
 					varName += *nextScene;
 					++nextScene;

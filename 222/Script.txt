@@ -15,7 +15,7 @@ Button(1 / 2, 1 / 2,
 	   "resource\\img\\Button0.png", "resource\\img\\Button1.png", "resource\\img\\Button2.png")
 Button(0.5, 0.6, 3.6585366, 0.15625, "场景2-语言1 ", "场景2-语言2", "场景2-语言3", "场景2-语言4", @Center, 255, 255, 255, 255, "resource\\img\\Button0.png", "resource\\img\\Button1.png", "resource\\img\\Button2.png")
 Image(0.5, 0.5, 16 / 9, 0.5, "resource\\img\\backGround.png", @Contain, @Center, 1)
-SetBGM("A:\\111.mp3", 0)
+SetStr($str, "A:\\CloudMusic\\UnicornPhantom - 漫步.mp3")
 
 
 Scene load_0_1(DelayScene : scMenu, 0)
@@ -30,13 +30,14 @@ TextScene("测试文本",
 		  "Test text.",
 		  "resource\\img\\backGround.png", @Cover)
 
-KeyFrameAnimation("resource\\img\\backGround.png", 6, @NotLoop)
+SetBGM($str, 0)
+
+
+KeyFrameAnimation("resource\\img\\backGround.png", 6, @Loop)
 AddKeyFrame(0.5, 0.5, 0, 0,
 			0.5, 0, 0, 255, @Center)
 AddKeyFrame(0.25, 0.75, 0, 0,
-			1.0, 0, 0, 255, @Center)
-AddKeyFrame(0.25, 0.75, 0, 0,
-			1.0, 0, 0.5, 255, @Center)
+			0.5, 0, 0.5, 255, @Center)
 AddKeyFrame(0.5, 0.5, 0, 0,
 			0.5, 0, 0.5, 255, @Center)
 
