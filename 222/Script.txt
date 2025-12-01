@@ -50,6 +50,11 @@ TextScene("\"这个脚本加载器似乎能跑起来？\"",
 		  "resource\\img\\backGround.png", @Cover)
 Chr("奇怪の作者")
 
+if ($var > 114)
+{
+	SetStr($TARGET_LIST[0], "sc_0_4")
+}
+
 
 Scene sc_0_3(TextScene : sc_0_4)
 TextScene("长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长长的测试文本", "语言1", "语言2", "语言3", "", @Cover)

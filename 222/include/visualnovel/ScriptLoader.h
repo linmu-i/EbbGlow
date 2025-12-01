@@ -556,6 +556,10 @@ namespace visualnovel
 				return VariableView{ VarType::Num, 0, 0 };
 			}
 		}
+		std::string& GetStringRef(const std::string& name)
+		{
+
+		}
 
 		void LoadSceneInfo(rsc::SharedFile::Iterator& nextScene, std::string& sceneName, std::string& sceneType, std::vector<std::string>& argsList)
 		{
@@ -1450,7 +1454,7 @@ namespace visualnovel
 		}
 	}
 
-	void ApplyScriptLoader(ecs::World2D& world, ScriptLoader& scriptLoader, VisualNovelConfig& cfg)
+	inline void ApplyScriptLoader(ecs::World2D& world, ScriptLoader& scriptLoader, VisualNovelConfig& cfg)
 	{
 		ui::ApplyButtonEx(world);
 		ui::ApplyImageBoxEx(world);

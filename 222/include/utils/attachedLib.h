@@ -118,7 +118,7 @@ public:
 };
 
 
-int ExecuteBF(const char* cmds, size_t size, std::function<int(void)> input = getchar, std::function<void(int)> output = putchar)
+inline int ExecuteBF(const char* cmds, size_t size, std::function<int(void)> input = getchar, std::function<void(int)> output = putchar)
 {
 	std::vector<char> memory;
 	memory.resize(size, 0);

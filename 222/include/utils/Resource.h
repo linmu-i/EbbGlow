@@ -749,8 +749,8 @@ namespace resource
 		public:
 			Iterator() : fileSize(0), offset(0), pointer(nullptr) {}
 			Iterator(size_t size, unsigned char* data, int64_t offset = 0) : fileSize(size), pointer(data), offset(offset) {}
-			Iterator(SharedFile file) : fileSize(file.dataSize), pointer(file.fileData), offset(0) {}
-			Iterator(SharedFile file, int64_t offset) : fileSize(file.dataSize), pointer(file.fileData + offset), offset(offset) {}
+			Iterator(const SharedFile& file) : fileSize(file.dataSize), pointer(file.fileData), offset(0) {}
+			Iterator(const SharedFile& file, int64_t offset) : fileSize(file.dataSize), pointer(file.fileData + offset), offset(offset) {}
 
 			Iterator(const Iterator& other) : fileSize(other.fileSize), offset(other.offset), pointer(other.pointer) {}
 			Iterator(Iterator&& other) noexcept : fileSize(other.fileSize), offset(other.offset), pointer(other.pointer)
@@ -834,32 +834,6 @@ namespace resource
 
 			const unsigned char& operator[](int64_t _offset) const noexcept
 			{
-				return pointer[_offset];
-			}
-
-			unsigned char& at(int64_t _offset)
-			{
-				if (offset + _offset < 0)
-				{
-					throw std::out_of_range("Before File.");
-				}
-				if (offset + _offset >= fileSize)
-				{
-					throw std::out_of_range("After File.");
-				}
-				return pointer[_offset];
-			}
-
-			const unsigned char& at(int64_t _offset) const
-			{
-				if (offset + _offset < 0)
-				{
-					throw std::out_of_range("Before File.");
-				}
-				if (offset + _offset >= fileSize)
-				{
-					throw std::out_of_range("After File.");
-				}
 				return pointer[_offset];
 			}
 

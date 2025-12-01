@@ -773,7 +773,6 @@ namespace ui
 				DrawLineEx({ slider.pos.x - halfL, slider.pos.y }, { slider.pos.x + halfL, slider.pos.y }, 10 * slider.scale, slider.trackColor);
 				if (slider.graduation > 1)
 				{
-					//float delta = slider.length / (slider.graduation - 1);
 					for (int i = 0; i < slider.graduation; ++i)
 					{
 						DrawLineEx({ slider.pos.x - halfL + delta * i, slider.pos.y - 10 }, { slider.pos.x - halfL + delta * i, slider.pos.y + 10 }, 5 * slider.scale, slider.trackColor);
@@ -866,10 +865,172 @@ namespace ui
 		}
 	};
 
+	struct RefSliderCom
+	{
+		float& value;
+		float length;
+		float scale;
+
+		float pressCount;
+		float hoverCount;
+
+		bool press;
+
+		int graduation;
+		int layerDepth;
+
+		Vector2 pos;
+		Color trackColor;
+		Color thumbColor;
+
+		rsc::SharedTexture2D thumbTexture;
+		rsc::SharedTexture2D trackTexture;
+
+		RefSliderCom(float length, float& value, float scale, int graduation, Vector2 pos, Color trackColor, Color thumbColor, rsc::SharedTexture2D thumbTexture, rsc::SharedTexture2D trackTexture, int layerDepth) :
+			length(length), graduation(graduation), pos(pos), trackColor(trackColor), thumbColor(thumbColor), thumbTexture(thumbTexture),
+			trackTexture(trackTexture), layerDepth(layerDepth), value(value), pressCount(0.0f), hoverCount(0.0f), press(false), scale(scale)
+		{}
+
+		RefSliderCom& operator=(const RefSliderCom& other)
+		{
+			if (this != &other)
+			{
+				length = other.length;
+				scale = other.scale;
+				graduation = other.graduation;
+				pos = other.pos;
+				trackColor = other.trackColor;
+				thumbColor = other.thumbColor;
+				thumbTexture = other.thumbTexture;
+				trackTexture = other.trackTexture;
+				layerDepth = other.layerDepth;
+				pressCount = other.pressCount;
+				hoverCount = other.hoverCount;
+				press = other.press;
+			}
+			return *this;
+		}
+	};
+
+	class RefSliderDraw : public ecs::DrawBase
+	{
+	private:
+		RefSliderCom slider;
+		float halfL;
+		float delta;
+
+	public:
+		RefSliderDraw(RefSliderCom slider, float halfL, float delta) : slider(slider), halfL(halfL), delta(delta) {}
+
+		void draw() override
+		{
+			if (slider.trackTexture.valid())
+			{
+				DrawTextureEx(slider.trackTexture.get(), { slider.pos.x - slider.trackTexture.get().width * 0.5f, slider.pos.y - slider.trackTexture.get().height * 0.5f }, 0.0f, slider.scale, WHITE);
+			}
+			else
+			{
+				DrawLineEx({ slider.pos.x - halfL, slider.pos.y }, { slider.pos.x + halfL, slider.pos.y }, 10 * slider.scale, slider.trackColor);
+				if (slider.graduation > 1)
+				{
+					for (int i = 0; i < slider.graduation; ++i)
+					{
+						DrawLineEx({ slider.pos.x - halfL + delta * i, slider.pos.y - 10 }, { slider.pos.x - halfL + delta * i, slider.pos.y + 10 }, 5 * slider.scale, slider.trackColor);
+					}
+				}
+			}
+			if (slider.thumbTexture.valid())
+			{
+				Vector2 pos = { slider.pos.x - halfL + slider.length * slider.value - slider.thumbTexture.get().width * 0.5f, slider.pos.y - slider.thumbTexture.get().height * 0.5f };
+				DrawTextureEx(slider.thumbTexture.get(), pos, 0.0f, slider.scale, WHITE);
+			}
+			else
+			{
+				Vector3 hsv = ColorToHSV(slider.thumbColor);
+				Vector2 pos = { slider.pos.x - halfL + slider.length * slider.value, slider.pos.y };
+				DrawCircleV(pos, 15.0f * slider.scale, ColorFromHSV(hsv.x, slider.hoverCount * hsv.y, hsv.z));
+				DrawCircleV(pos, 11.25f * slider.scale, WHITE);
+				DrawCircleV(pos, 7.5f * slider.pressCount, slider.thumbColor);
+			}
+		}
+	};
+
+	class RefSliderSystem : public ecs::SystemBase
+	{
+	private:
+		ecs::DoubleComs<RefSliderCom>* coms;
+		ecs::Layers* layers;
+
+	public:
+		RefSliderSystem(ecs::DoubleComs<RefSliderCom>* coms, ecs::Layers* layers) : coms(coms), layers(layers) {}
+
+		void update() override
+		{
+			coms->active()->forEach
+			(
+				[this](ecs::entity id, RefSliderCom& comActive)
+				{
+					RefSliderCom& comInactive = *(coms->inactive()->get(id));
+
+					comInactive = comActive;
+
+					float deltaTime = GetFrameTime();
+					float halfL = comActive.length * 0.5f;
+					float delta = comActive.length / (comActive.graduation - 1);
+					Vector2 thumbPos = { comActive.pos.x - halfL + comActive.length * comActive.value, comActive.pos.y };
+
+					if (comActive.press && IsMouseButtonReleased(MOUSE_BUTTON_LEFT))
+					{
+						comInactive.press = false;
+					}
+					if (Vector2DistanceSqr(thumbPos, GetMousePosition()) > 225 * comActive.scale * comActive.scale)
+					{
+						comInactive.hoverCount -= deltaTime * 6.0f;
+						comInactive.hoverCount = std::clamp(comInactive.hoverCount, 0.5f, 1.0f);
+					}
+					else
+					{
+						comInactive.hoverCount += deltaTime * 6.0f;
+						comInactive.hoverCount = std::clamp(comInactive.hoverCount, 0.5f, 1.0f);
+						if (!comActive.press && IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+						{
+							comInactive.press = true;
+						}
+					}
+					if (comActive.press)
+					{
+						comInactive.pressCount += deltaTime * 20.0f;
+						comInactive.pressCount = std::clamp(comInactive.pressCount, 0.0f, 1.0f);
+						float x = GetMousePosition().x;
+						x = std::clamp(x, comActive.pos.x - halfL, comActive.pos.x + halfL);
+						x -= comActive.pos.x;
+						x += halfL;
+						if (comActive.graduation > 1)
+						{
+							comInactive.value = std::clamp(int(x / delta + 0.5f) / float(comActive.graduation - 1), 0.0f, 1.0f);
+						}
+						else
+						{
+							comInactive.value = x / comActive.length;
+						}
+					}
+					else
+					{
+						comInactive.pressCount -= deltaTime * 20.0f;
+						comInactive.pressCount = std::clamp(comInactive.pressCount, 0.0f, 1.0f);
+					}
+					(*layers)[comActive.layerDepth].push_back(std::make_unique<RefSliderDraw>(RefSliderDraw(comActive, halfL, delta)));
+				}
+			);
+		}
+	};
+
 	void ApplySlider(ecs::World2D& world)
 	{
 		world.addPool<SliderCom>();
+		world.addPool<RefSliderCom>();
 		world.addSystem(SliderSystem(world.getDoubleBuffer<SliderCom>(), world.getUiLayer()));
+		world.addSystem(RefSliderSystem(world.getDoubleBuffer<RefSliderCom>(), world.getUiLayer()));
 	}
 
 	struct ImageBoxExCom
