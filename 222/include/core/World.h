@@ -8,6 +8,43 @@ namespace ecs
 {
 	using Layers = std::array<std::vector<std::unique_ptr<DrawBase>>, 16>;
 
+	class AddBufferBase
+	{
+	protected:
+		ComponentPoolBase* pool0;
+		ComponentPoolBase* pool1;
+	public:
+		AddBufferBase(ComponentPoolBase* pool0, ComponentPoolBase* pool1) : pool0(pool0), pool1(pool1) {}
+		virtual ~AddBufferBase() = default;
+		virtual void addToPool() = 0;
+	};
+
+	template<typename T>
+	class AddBuffer : public AddBufferBase
+	{
+	private:
+		std::vector<std::pair<ecs::entity, T>> buffer;
+
+	public:
+		AddBuffer(ComponentPoolBase* pool0, ComponentPoolBase* pool1) : AddBufferBase(pool0, pool1) {}
+		void addBuffer(entity id, T&& data)
+		{
+			buffer.emplace_back(id, std::forward<T>(data));
+		}
+
+		void addToPool() override
+		{
+			ComponentPool<T>* p0 = static_cast<ComponentPool<T>*>(pool0);
+			ComponentPool<T>* p1 = static_cast<ComponentPool<T>*>(pool1);
+			for (auto& b : buffer)
+			{
+				p0->add(b.first, b.second);
+				p1->add(b.first, b.second);
+			}
+			buffer.clear();
+		}
+	};
+
 	class World2D
 	{
 	private:
@@ -23,8 +60,9 @@ namespace ecs
 		std::array<std::vector<std::unique_ptr<DrawBase>>, 16> uiLayer;
 		MessageManager messageManager;
 		Camera2D camera;
-		
+
 		std::vector<entity> waitDelete;
+		std::unordered_map<std::type_index, std::unique_ptr<AddBufferBase>> waitAdd;
 
 		rsc::SharedRenderTexture2D renderTexture0;
 		rsc::SharedRenderTexture2D renderTexture1;
@@ -80,13 +118,16 @@ namespace ecs
 			camera.rotation = 0.0f;
 			camera.zoom = 1.0f;
 		}
-		
+
 		template<typename T>
 		World2D& addPool()
 		{
-			comPools0.emplace(std::type_index(typeid(T)), std::unique_ptr<ComponentPoolBase>(new ComponentPool<T>));
-			comPools1.emplace(std::type_index(typeid(T)), std::unique_ptr<ComponentPoolBase>(new ComponentPool<T>));
+			ComponentPool<T>* pool0 = new ComponentPool<T>();
+			ComponentPool<T>* pool1 = new ComponentPool<T>();
+			comPools0.emplace(std::type_index(typeid(T)), std::unique_ptr<ComponentPoolBase>(pool0));
+			comPools1.emplace(std::type_index(typeid(T)), std::unique_ptr<ComponentPoolBase>(pool1));
 			doubleBuffered.emplace(std::type_index(typeid(T)), std::unique_ptr<DoubleBufferedBase>(new DoubleBuffered<ComponentPool<T>*>(getPool0<T>(), getPool1<T>(), framesCount % 2 == 0)));
+			waitAdd.emplace(std::type_index(typeid(T)), std::unique_ptr<AddBufferBase>(new AddBuffer<T>(pool0, pool1)));
 			return *this;
 		}
 		template<typename T>
@@ -128,9 +169,13 @@ namespace ecs
 		template<typename T, typename...Args>
 		World2D& createUnit(entity id, T com, Args...args)
 		{
-			getPool0<std::decay_t<T>>()->add(id, com);
-			getPool1<std::decay_t<T>>()->add(id, com);
-			createUnit(id, args...);
+			auto it = waitAdd.find(std::type_index(typeid(T)));
+			if (it != waitAdd.end())
+			{
+				AddBuffer<T>* buffer = static_cast<AddBuffer<T>*>((it->second).get());
+				buffer->addBuffer(id, std::forward<T>(com));
+			}
+			createUnit(id, std::forward<Args>(args)...);
 			return *this;
 		}
 		inline void createUnit(entity id) noexcept {}
@@ -164,10 +209,9 @@ namespace ecs
 				unitsLayer[i].clear();
 			}
 			EndTextureMode();
-			//DrawTexture(renderTexture.get().texture, 0, 0, WHITE);
 			DrawTextureRec(activeRenderTexture().get().texture,
-				Rectangle{0, 0, float(activeRenderTexture().get().texture.width), float(-activeRenderTexture().get().texture.height)},
-				Vector2{0, 0},
+				Rectangle{ 0, 0, float(activeRenderTexture().get().texture.width), float(-activeRenderTexture().get().texture.height) },
+				Vector2{ 0, 0 },
 				WHITE);
 		}
 		void update()
@@ -181,6 +225,15 @@ namespace ecs
 				for (auto& ps : comPools1)
 				{
 					ps.second->remove(i);
+				}
+			}
+			for (auto& wa : waitAdd)
+			{
+				auto it0 = comPools0.find(wa.first);
+				auto it1 = comPools1.find(wa.first);
+				if (it0 != comPools0.end() && it1 != comPools1.end())
+				{
+					wa.second->addToPool();
 				}
 			}
 			waitDelete.clear();
