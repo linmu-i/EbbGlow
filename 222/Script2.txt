@@ -1,0 +1,2 @@
+Scene sc_0_4(TextScene : scMenu)
+TextScene("回去循环吧", "语言1", "语言2", "语言3", "resource\\img\\backGround.png", @Cover)

@@ -64,13 +64,16 @@ namespace visualnovel
 
 		ScriptData& operator+=(const ScriptData& other)
 		{
-			unsigned char* newData = new unsigned char[size + other.size + 1];
-			memcpy(newData, data, size);
-			newData[size] = '\n';
-			memcpy(newData + size + 1, other.data, other.size);
-			delete[] data;
-			data = newData;
-			size += (other.size + 1);
+			if (other.data)
+			{
+				unsigned char* newData = new unsigned char[size + other.size + 1];
+				memcpy(newData, data, size);
+				newData[size] = '\n';
+				memcpy(newData + size + 1, other.data, other.size);
+				delete[] data;
+				data = newData;
+				size += (other.size + 1);
+			}
 			return *this;
 		}
 
@@ -96,6 +99,7 @@ namespace visualnovel
 		}
 
 		const unsigned char* getData() const { return data; }
+		unsigned char* getData() { return data; }
 		size_t getSize() const { return size; }
 	};
 
@@ -1223,24 +1227,8 @@ namespace visualnovel
 				++nextScene;
 			}
 		}
-
-	public:
-		ScriptLoader(ecs::World2D& world, const std::string& script, vn::VisualNovelConfig& cfg) : world(world), script(script.c_str()), cfg(cfg) {}
-
-		void start()
+		void LoadGlobal(rsc::SharedFile::Iterator& scriptPtr, ScriptData& scriptDataTmp)
 		{
-			auto s = viewer.find(beginScene);
-			if (s != viewer.end())
-			{
-				loadScene(s->second);
-			}
-		}
-
-		std::future<void> load()
-		{
-			auto scriptPtr = script.begin();
-			ScriptData scriptDataTmp;
-			if (memcmp(scriptPtr.get(), "Global", 6)) return std::async(std::launch::deferred, []() {});
 			while (*scriptPtr != '\n' && !scriptPtr.eof()) ++scriptPtr;
 			++scriptPtr;
 			while (memcmp(scriptPtr.get(), "Scene", 5) && !scriptPtr.eof())
@@ -1300,6 +1288,7 @@ namespace visualnovel
 					ScriptData tmp(ANSIPath);
 					UnloadANSI(ANSIPath);
 					scriptDataTmp += std::move(tmp);
+					scriptPtr = rsc::SharedFile::Iterator(scriptDataTmp.getSize(), scriptDataTmp.getData(), scriptPtr.position());
 					while (*scriptPtr != '\n' && !scriptPtr.eof()) ++scriptPtr;
 					++scriptPtr;
 				}
@@ -1418,14 +1407,32 @@ namespace visualnovel
 					++scriptPtr;
 				}
 			}
-			script += scriptDataTmp;
+		}
+
+	public:
+		ScriptLoader(ecs::World2D& world, const std::string& script, vn::VisualNovelConfig& cfg) : world(world), script(script.c_str()), cfg(cfg) {}
+
+		void start()
+		{
+			auto s = viewer.find(beginScene);
+			if (s != viewer.end())
+			{
+				loadScene(s->second);
+			}
+		}
+
+		std::future<void> load()
+		{
+			auto scriptPtr = script.begin();
+			if (memcmp(scriptPtr.get(), "Global", 6)) return std::async(std::launch::deferred, []() {});
+			std::pair<std::string, int64_t> beginTmp;
 			return std::async(std::launch::async, [this]()
 				{
 					auto iter = script.begin();
-
+					std::vector<std::pair<std::string, int64_t>> mapTmp;
 					while (iter)
 					{
-						if (memcmp(iter.get(), "Scene", 5) == 0 && (iter.position() == 0 || iter[-1] == '\n'))
+						if (!memcmp(iter.get(), "Scene", 5) && (iter.position() == 0 || iter[-1] == '\n') && (isspace(iter[5])))
 						{
 							std::string stName;
 							auto tmpIter = iter;
@@ -1439,9 +1446,21 @@ namespace visualnovel
 								stName += *iter;
 								++iter;
 							}
-							viewer.emplace(stName, tmpIter);
+							mapTmp.emplace_back(stName, tmpIter.position());
 						}
-						++iter;
+						else if (!memcmp(iter.get(), "Global", 6) && (iter.position() == 0 || iter[-1] == '\n') && (isspace(iter[6])))
+						{
+							LoadGlobal(iter, script);
+						}
+						else
+						{
+							++iter;
+						}
+						
+					}
+					for (auto& [name, offset] : mapTmp)
+					{
+						viewer.emplace(std::move(name), rsc::SharedFile::Iterator(script.getSize(), script.getData(), offset));
 					}
 				});
 		}

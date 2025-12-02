@@ -4,8 +4,6 @@
 
 #define CloseWindow    Win32CloseWindow
 #define ShowCursor     Win32ShowCursor
-#define HideCursor     Win32HideCursor
-#define DrawText       Win32DrawText
 #define Rectangle      Win32RECT
 #include <map>
 #include <vector>

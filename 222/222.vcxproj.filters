@@ -88,5 +88,13 @@
     <Text Include="Script.txt">
       <Filter>资源文件</Filter>
     </Text>
+    <Text Include="Script2.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="include\visualnovel\使用说明.md">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

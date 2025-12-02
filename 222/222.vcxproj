@@ -165,7 +165,11 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="Script.txt" />
+    <Text Include="Script2.txt" />
     <Text Include="文本.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="include\visualnovel\使用说明.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
