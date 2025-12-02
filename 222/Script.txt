@@ -1,19 +1,25 @@
 Global
 Begin("scMenu")
 String str
+Macro BasicButton(x, y, text)
+{
+	Button($x, $y, 3.6585366, 0.15625, $text, $text, $text, $text, @Center, 255, 255, 255, 255, "resource\\img\\Button0.png", "resource\\img\\Button1.png", "resource\\img\\Button2.png")
+}
 
 
 Scene scMenu(SelectScene : load_0_1, sc_0_1)
-Button(1 / 2, 1 / 2,
-	   3.6585366, 0.15625,
-	   "场景1-语言1 ",
-	   "场景1-语言2",
-	   "场景1-语言3",
-	   "场景1-语言4",
-	   @Center,
-	   255, 255, 255, 255,
-	   "resource\\img\\Button0.png", "resource\\img\\Button1.png", "resource\\img\\Button2.png")
-Button(0.5, 0.6, 3.6585366, 0.15625, "场景2-语言1 ", "场景2-语言2", "场景2-语言3", "场景2-语言4", @Center, 255, 255, 255, 255, "resource\\img\\Button0.png", "resource\\img\\Button1.png", "resource\\img\\Button2.png")
+//Button(1 / 2, 1 / 2,
+//	   3.6585366, 0.15625,
+//	   "场景1-语言1 ",
+//	   "场景1-语言2",
+//	   "场景1-语言3",
+//	   "场景1-语言4",
+//	   @Center,
+//	   255, 255, 255, 255,
+//	   "resource\\img\\Button0.png", "resource\\img\\Button1.png", "resource\\img\\Button2.png")
+//Button(0.5, 0.6, 3.6585366, 0.15625, "场景2-语言1 ", "场景2-语言2", "场景2-语言3", "场景2-语言4", @Center, 255, 255, 255, 255, "resource\\img\\Button0.png", "resource\\img\\Button1.png", "resource\\img\\Button2.png")
+&BasicButton(0.5, 0.5, "场景1-语言1")
+&BasicButton(0.5, 0.6, "场景2-语言1")
 Image(0.5, 0.5, 16 / 9, 0.5, "resource\\img\\backGround.png", @Contain, @Center, 1)
 SetStr($str, "A:\\CloudMusic\\UnicornPhantom - 漫步.mp3")
 

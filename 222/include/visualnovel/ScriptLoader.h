@@ -247,6 +247,13 @@ namespace visualnovel
 		};
 		std::unordered_map<std::string, VariableView> variables;
 
+		struct MacroView
+		{
+			std::vector<std::string> argsList;
+			std::string body;
+		};
+		std::unordered_map<std::string, MacroView> macros;
+
 		friend void ApplyScriptLoader(ecs::World2D&, ScriptLoader&, VisualNovelConfig&);
 		MusicManager* mscMgr = nullptr;
 		
@@ -970,6 +977,21 @@ namespace visualnovel
 							++nextScene;
 							while (!nextScene.eof() && braceCount2 > 0)
 							{
+								if (*nextScene == '"')
+								{
+									++nextScene;
+									while (!nextScene.eof() && *nextScene != '"')
+									{
+										if (*nextScene == '\\' && nextScene.position() < nextScene.size() - 1)
+										{
+											nextScene += 2;
+										}
+										else
+										{
+											++nextScene;
+										}
+									}
+								}
 								if (*nextScene == '(') ++braceCount2;
 								else if (*nextScene == ')') --braceCount2;
 								++nextScene;
@@ -1121,6 +1143,76 @@ namespace visualnovel
 				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
 				++nextScene;
 			}
+			else if (!memcmp(nextScene.get(), "&", 1))
+			{
+				++nextScene;
+				std::string macroName;
+				while (!isspace(*nextScene) && *nextScene != '(' && !nextScene.eof())
+				{
+					macroName += *nextScene;
+					++nextScene;
+				}
+				while (isspace(*nextScene) && !nextScene.eof()) ++nextScene;
+				++nextScene;
+				std::vector<std::string> macroArgs;
+				while (*nextScene != ')' && !nextScene.eof())
+				{
+					std::string argBuf;
+					while (isspace(*nextScene) && !nextScene.eof()) ++nextScene;
+					while (*nextScene != ',' && *nextScene != ')' && !isspace(*nextScene) && !nextScene.eof())
+					{
+						argBuf += *nextScene;
+						++nextScene;
+					}
+					macroArgs.push_back(argBuf);
+					while (isspace(*nextScene) && !nextScene.eof()) ++nextScene;
+					if (*nextScene == ',') ++nextScene;
+				}
+				++nextScene;
+				auto macroIt = macros.find(macroName);
+				if (macroIt != macros.end())
+				{
+					std::vector<unsigned char> macroScript;
+					auto bodyIt = macroIt->second.body.begin();
+					while (bodyIt != macroIt->second.body.end())
+					{
+						std::string argName;
+						if (*bodyIt != '$')
+						{
+							macroScript.push_back(*bodyIt);
+							++bodyIt;
+							continue;
+						}
+						else
+						{
+							++bodyIt;
+							while (!isspace(*bodyIt) && *bodyIt != ',' && *bodyIt != ')')
+							{
+								argName += *bodyIt;
+								++bodyIt;
+							}
+							size_t index = 0;
+							for (auto argN : macroIt->second.argsList)
+							{
+								if (argN == argName) break;
+								++index;
+							}
+							if (index < macroArgs.size())
+							{
+								for (auto c : macroArgs[index])
+								{
+									macroScript.push_back(c);
+								}
+							}
+						}
+					}
+					rsc::SharedFile::Iterator macroIt2(macroScript.size(), macroScript.data());
+					while (!macroIt2.eof())
+					{
+						LoadFunction(macroIt2, sceneName, sceneType, textTmp, argsList);
+					}
+				}
+			}
 			else if (!memcmp(nextScene.get(), "//", 2))
 			{
 				while (*nextScene != '\n' && !nextScene.eof()) ++nextScene;
@@ -1219,6 +1311,107 @@ namespace visualnovel
 					beginScene = GetString(scriptPtr);
 					while (*scriptPtr != '\n') ++scriptPtr;
 					++scriptPtr;
+				}
+				else if (!memcmp(scriptPtr.get(), "Macro", 5))
+				{
+					scriptPtr += 5;
+					while (isspace(*scriptPtr)) ++scriptPtr;
+					std::string macroName;
+					while (!isspace(*scriptPtr) && *scriptPtr != '(' && !scriptPtr.eof())
+					{
+						macroName += *scriptPtr;
+						++scriptPtr;
+					}
+					while (isspace(*scriptPtr)) ++scriptPtr;
+					++scriptPtr;
+					MacroView macroViewTmp;
+					while (*scriptPtr != ')' && !scriptPtr.eof())
+					{
+						while (isspace(*scriptPtr) && !scriptPtr.eof()) ++scriptPtr;
+						std::string argBuf;
+						while (*scriptPtr != ',' && *scriptPtr != ')' && !isspace(*scriptPtr) && !scriptPtr.eof())
+						{
+							argBuf += *scriptPtr;
+							++scriptPtr;
+						}
+						macroViewTmp.argsList.push_back(argBuf);
+						while (isspace(*scriptPtr) && !scriptPtr.eof()) ++scriptPtr;
+						if (*scriptPtr == ',') ++scriptPtr;
+					}
+					++scriptPtr;
+					while (*scriptPtr != '{' && !scriptPtr.eof()) ++scriptPtr;
+					++scriptPtr;
+					int braceCount = 1;
+					std::string macroScriptBuf;
+					macroScriptBuf.reserve(128);
+					while (braceCount)
+					{
+						if (*scriptPtr == '{')
+						{
+							++braceCount;
+						}
+						else if (*scriptPtr == '}')
+						{
+							--braceCount;
+						}
+						else if (*scriptPtr == '(')
+						{
+							int braceCount2 = 1;
+							macroScriptBuf.push_back(*scriptPtr);
+							++scriptPtr;
+							while (braceCount2 > 0 && !scriptPtr.eof())
+							{
+								if (*scriptPtr == '"')
+								{
+									macroScriptBuf.push_back(*scriptPtr);
+									++scriptPtr;
+									while (!scriptPtr.eof() && *scriptPtr != '"')
+									{
+										if (*scriptPtr == '\\' && scriptPtr.position() < scriptPtr.size() - 1)
+										{
+											macroScriptBuf.push_back(*scriptPtr);
+											++scriptPtr;
+											macroScriptBuf.push_back(*scriptPtr);
+											++scriptPtr;
+										}
+										else
+										{
+											macroScriptBuf.push_back(*scriptPtr);
+											++scriptPtr;
+										}
+									}
+								}
+								if (*scriptPtr == '(') ++braceCount2;
+								else if (*scriptPtr == ')') --braceCount2;
+								macroScriptBuf.push_back(*scriptPtr);
+								++scriptPtr;
+							}
+							continue;
+						}
+						else if (*scriptPtr == '/')
+						{
+							if (scriptPtr[1] == '/')
+							{
+								macroScriptBuf.push_back(*scriptPtr);
+								++scriptPtr;
+								macroScriptBuf.push_back(*scriptPtr);
+								++scriptPtr;
+								while (*scriptPtr != '\n' && !scriptPtr.eof())
+								{
+									macroScriptBuf.push_back(*scriptPtr);
+									++scriptPtr;
+								}
+								continue;
+							}
+						}
+						if (braceCount > 0)
+						{
+							macroScriptBuf.push_back(*scriptPtr);
+						}
+						++scriptPtr;
+					}
+					macroViewTmp.body = std::move(macroScriptBuf);
+					macros.emplace(macroName, std::move(macroViewTmp));
 				}
 				else
 				{
