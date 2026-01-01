@@ -1,0 +1,333 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="源文件\Core">
+      <UniqueIdentifier>{834c5a5d-862d-4d88-a072-78afde8e6fbc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Graphics">
+      <UniqueIdentifier>{14d285d4-384e-4c9a-8030-10aef3921c99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Utils">
+      <UniqueIdentifier>{2d22f041-4130-46fa-97be-bbdf483316b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\VisualNovel">
+      <UniqueIdentifier>{916e6d0a-cd1b-4f99-afe1-7d51de27ea7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\UI">
+      <UniqueIdentifier>{51bb77bc-93c5-45e7-9434-0aa3dc213402}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Core">
+      <UniqueIdentifier>{da38b36b-5697-4434-ac6d-a63e02154b0e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Graphics">
+      <UniqueIdentifier>{f0604bd2-4d4c-47cb-b0b7-3f37d9f06329}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\UI">
+      <UniqueIdentifier>{769fe8a5-c671-455b-b8dc-2ae403613153}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\VisualNovel">
+      <UniqueIdentifier>{83f5992e-ad29-47ed-851f-87cef205d184}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Utils">
+      <UniqueIdentifier>{d3e3b49f-41cd-4b44-aca5-782f037a220c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Core\ECS">
+      <UniqueIdentifier>{9af0b76e-fb38-43c2-8c4a-8118851a65f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Core\Message">
+      <UniqueIdentifier>{54b4c27b-76ed-49a3-bb14-dfb26f286c8d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Core\World">
+      <UniqueIdentifier>{8d89a43b-0b83-413f-88d2-3f42aade8097}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\UI\Animation">
+      <UniqueIdentifier>{06076ebd-6f3f-428d-8000-2281d52b3ed7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\UI\Button">
+      <UniqueIdentifier>{c71a969b-466a-4547-8a66-934adf22f670}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\UI\ImageBox">
+      <UniqueIdentifier>{f6c0c4f5-0054-4d2f-86de-0db5afd728b5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\UI\TextBox">
+      <UniqueIdentifier>{6f24839d-3594-4bb5-95d2-f803198da723}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\VisualNovel\ScriptLoader">
+      <UniqueIdentifier>{88ecf0ea-c0d5-4db9-8167-716de344ae4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Core\ECS">
+      <UniqueIdentifier>{72e2775e-8e3b-4185-801a-46d7badecb45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Core\Message">
+      <UniqueIdentifier>{ee3e642c-5ef9-4a43-a30a-d7276aa412d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Core\World">
+      <UniqueIdentifier>{46d103ab-2051-4cd2-97c6-04152668cea5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\VisualNovel\VisualNovel">
+      <UniqueIdentifier>{c848d15e-7196-4456-af0d-1ad9eb72645e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\VisualNovel\VisualNovel">
+      <UniqueIdentifier>{31661802-f58c-4a2e-817e-523f69629c60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\VisualNovel\ScriptLoader">
+      <UniqueIdentifier>{828eb708-de64-497f-b57b-b8991e690b36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\UI\Button">
+      <UniqueIdentifier>{c0c95962-b7cd-4bda-afb5-03e77bf4df08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\UI\ImageBox">
+      <UniqueIdentifier>{9cf9d24c-ae52-44c8-9734-5154a6d78320}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\UI\TextBox">
+      <UniqueIdentifier>{c924dc63-ff0f-4964-b7ea-e65fc73d825f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\UI\Animation">
+      <UniqueIdentifier>{30367733-b85b-4cd3-8f35-6531f124a007}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\Core\ECS\IdManager.cpp">
+      <Filter>源文件\Core\ECS</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\Core\Message\MessageManager.cpp">
+      <Filter>源文件\Core\Message</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\Core\World\World2D.cpp">
+      <Filter>源文件\Core\World</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\Graphics\Graphics.cpp">
+      <Filter>源文件\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\UI\Animation\Animation.cpp">
+      <Filter>源文件\UI\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\UI\Animation\KeyFrameAnimation.cpp">
+      <Filter>源文件\UI\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\UI\Button\Button.cpp">
+      <Filter>源文件\UI\Button</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\UI\Button\ButtonEx.cpp">
+      <Filter>源文件\UI\Button</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\UI\ImageBox\ImageBox.cpp">
+      <Filter>源文件\UI\ImageBox</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\UI\ImageBox\ImageBoxEx.cpp">
+      <Filter>源文件\UI\ImageBox</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\UI\TextBox\TextBox.cpp">
+      <Filter>源文件\UI\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\UI\TextBox\TextBoxEx.cpp">
+      <Filter>源文件\UI\TextBox</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\VisualNovel\ScriptLoader\GlobalFunctions.cpp">
+      <Filter>源文件\VisualNovel\ScriptLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\VisualNovel\ScriptLoader\MusicManager.cpp">
+      <Filter>源文件\VisualNovel\ScriptLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\VisualNovel\ScriptLoader\SceneFunctions.cpp">
+      <Filter>源文件\VisualNovel\ScriptLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\VisualNovel\ScriptLoader\SceneTypes.cpp">
+      <Filter>源文件\VisualNovel\ScriptLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\VisualNovel\ScriptLoader\ScriptData.cpp">
+      <Filter>源文件\VisualNovel\ScriptLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\VisualNovel\ScriptLoader\ScriptLoader.cpp">
+      <Filter>源文件\VisualNovel\ScriptLoader</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\Utils\Control.cpp">
+      <Filter>源文件\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\Utils\Functions.cpp">
+      <Filter>源文件\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\Utils\Input_Raylib_Win32.cpp">
+      <Filter>源文件\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\Utils\ResourceCreator.cpp">
+      <Filter>源文件\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\Utils\Resoure.cpp">
+      <Filter>源文件\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\Utils\ThreadPool.cpp">
+      <Filter>源文件\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\VisualNovel\VisualNovel\MainTextBox.cpp">
+      <Filter>源文件\VisualNovel\VisualNovel</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\EbbGlow\Utils\ResourceCreator.h">
+      <Filter>源文件\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="source\EbbGlow\Utils\RLKey.h">
+      <Filter>源文件\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="source\EbbGlow\Utils\RLTypesCast.h">
+      <Filter>源文件\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Core\ECS\ComponentPool.h">
+      <Filter>头文件\Core\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Core\ECS\ECSType.h">
+      <Filter>头文件\Core\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Core\ECS\IdManager.h">
+      <Filter>头文件\Core\ECS</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Core\Message\MessageManager.h">
+      <Filter>头文件\Core\Message</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Core\Message\MessageType.h">
+      <Filter>头文件\Core\Message</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Core\Message\MessageTypeManager.h">
+      <Filter>头文件\Core\Message</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Core\World\World2D.h">
+      <Filter>头文件\Core\World</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Core\World\WorldType.h">
+      <Filter>头文件\Core\World</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Core\ECS.h">
+      <Filter>头文件\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Core\Message.h">
+      <Filter>头文件\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Core\World.h">
+      <Filter>头文件\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Graphics\Graphics.h">
+      <Filter>头文件\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Utils\attachedLib.h">
+      <Filter>头文件\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Utils\Control.h">
+      <Filter>头文件\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Utils\Functions.h">
+      <Filter>头文件\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Utils\Input.h">
+      <Filter>头文件\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Utils\Math.h">
+      <Filter>头文件\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Utils\Resource.h">
+      <Filter>头文件\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Utils\RLUtils.h">
+      <Filter>头文件\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Utils\ThreadPool.h">
+      <Filter>头文件\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Utils\Types.h">
+      <Filter>头文件\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader\GlobalFunctions.h">
+      <Filter>头文件\VisualNovel\ScriptLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader\MainLib.h">
+      <Filter>头文件\VisualNovel\ScriptLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader\MusicManager.h">
+      <Filter>头文件\VisualNovel\ScriptLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader\SceneFunctions.h">
+      <Filter>头文件\VisualNovel\ScriptLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader\SceneTypes.h">
+      <Filter>头文件\VisualNovel\ScriptLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader\ScriptData.h">
+      <Filter>头文件\VisualNovel\ScriptLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader\ScriptLoader.h">
+      <Filter>头文件\VisualNovel\ScriptLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader\ScriptLoaderTypes.h">
+      <Filter>头文件\VisualNovel\ScriptLoader</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\VisualNovel\VisualNovel\MainTextBox.h">
+      <Filter>头文件\VisualNovel\VisualNovel</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\VisualNovel\VisualNovel\VisualNovel.h">
+      <Filter>头文件\VisualNovel\VisualNovel</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader.h">
+      <Filter>头文件\VisualNovel</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\UI\Button\Button.h">
+      <Filter>头文件\UI\Button</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\UI\Button\ButtonEx.h">
+      <Filter>头文件\UI\Button</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\UI\Button\ButtonMsg.h">
+      <Filter>头文件\UI\Button</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\UI\ImageBox\ImageBox.h">
+      <Filter>头文件\UI\ImageBox</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\UI\ImageBox\ImageBoxEx.h">
+      <Filter>头文件\UI\ImageBox</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\UI\Animation\Animation.h">
+      <Filter>头文件\UI\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\UI\Animation\KeyFrameAnimation.h">
+      <Filter>头文件\UI\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\UI\TextBox\TextBox.h">
+      <Filter>头文件\UI\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\UI\TextBox\TextBoxEx.h">
+      <Filter>头文件\UI\TextBox</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\VisualNovel\VisualNovel.h">
+      <Filter>头文件\VisualNovel</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\UI\Animation.h">
+      <Filter>头文件\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\UI\Button.h">
+      <Filter>头文件\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\UI\ImageBox.h">
+      <Filter>头文件\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\UI\TextBox.h">
+      <Filter>头文件\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\UI\UI.h">
+      <Filter>头文件\UI</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
