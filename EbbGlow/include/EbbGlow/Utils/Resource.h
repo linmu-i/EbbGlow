@@ -1,5 +1,6 @@
 #pragma once
 #include <EbbGlow/Utils/Types.h>
+#include <string>
 
 namespace ebbglow::resource
 {
@@ -14,6 +15,7 @@ namespace ebbglow::resource
 	public:
 		SharedImage() noexcept;
 		SharedImage(const char* imagePath) noexcept;
+		SharedImage(std::u8string_view imagePath) noexcept;
 		SharedImage(const SharedImage& other);
 		SharedImage(SharedImage&& other) noexcept;
 		~SharedImage();
@@ -42,6 +44,7 @@ namespace ebbglow::resource
 	public:
 		SharedTexture() noexcept;
 		SharedTexture(const char* texturePath) noexcept;
+		SharedTexture(std::u8string_view texturePath) noexcept;
 		SharedTexture(const SharedTexture& other);
 		SharedTexture(SharedTexture&& other) noexcept;
 		~SharedTexture();
@@ -105,7 +108,8 @@ namespace ebbglow::resource
 		SharedMusic(const SharedMusic& other) noexcept;
 		SharedMusic(SharedMusic&& other) noexcept;
 		SharedMusic(const char* musicPath) noexcept;
-
+		//SharedMusic(std::u8string_view musicPath) noexcept;
+		
 		SharedMusic& operator=(const SharedMusic& other) noexcept;
 		SharedMusic& operator=(SharedMusic&& other) noexcept;
 		~SharedMusic();
@@ -207,8 +211,9 @@ namespace ebbglow::resource
 		};
 
 		SharedFile() noexcept;
-		SharedFile(const char* filePath);
-		SharedFile(unsigned char* fileData, int dataSize, const char* name) noexcept;
+		SharedFile(const char* filePath) noexcept;
+		SharedFile(unsigned char* fileData, int dataSize, const char* name) noexcept;//”…new∑÷≈‰
+		SharedFile(std::u8string_view filePath) noexcept;
 		SharedFile(const SharedFile& other) noexcept;
 		SharedFile(SharedFile&& other) noexcept;
 
@@ -269,6 +274,7 @@ namespace ebbglow::resource
 		SharedSound(const SharedSound& other) noexcept;
 		SharedSound(SharedSound&& other) noexcept;
 		SharedSound(const char* soundPath) noexcept;
+		SharedSound(std::u8string_view soundPath) noexcept;
 
 		SharedSound& operator=(const SharedSound& other) noexcept;
 		SharedSound& operator=(SharedSound&& other) noexcept;

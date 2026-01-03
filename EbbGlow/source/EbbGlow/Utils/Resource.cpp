@@ -2,6 +2,9 @@
 #include <cstring>
 #include <new>
 #include <raylib.h>
+#include <filesystem>
+#include <string>
+#include <fstream>
 
 namespace ebbglow::resource
 {
@@ -11,6 +14,40 @@ namespace ebbglow::resource
 	SharedImage::SharedImage(const char* imagePath) noexcept
 	{
 		image = new(std::nothrow) ::Image(LoadImage(imagePath));
+		if (image == nullptr)
+		{
+			ref = nullptr;
+			return;
+		}
+		if (((::Image*)image)->data == nullptr)
+		{
+			delete (::Image*)image;
+			ref = nullptr;
+			return;
+		}
+		ref = new(std::nothrow) size_t(1);
+		if (ref == nullptr)
+		{
+			UnloadImage(*((::Image*)image));
+			delete (::Image*)image;
+			image = nullptr;
+		}
+	}
+
+	SharedImage::SharedImage(std::u8string_view imagePath) noexcept
+	{
+		std::filesystem::path path(imagePath);
+		std::ifstream file(path, std::ios::binary);
+		if (!file)
+		{
+			image = nullptr;
+			ref = nullptr;
+			return;
+		}
+		std::vector<uint8_t> data{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+		file.close();
+
+		image = new(std::nothrow) ::Image(LoadImageFromMemory(path.extension().string().c_str(), data.data(), static_cast<int>(data.size())));
 		if (image == nullptr)
 		{
 			ref = nullptr;
@@ -125,6 +162,40 @@ namespace ebbglow::resource
 	SharedTexture::SharedTexture(const char* texturePath) noexcept
 	{
 		auto* loaded = new(std::nothrow) Texture2D(LoadTexture(texturePath));
+		if (loaded == nullptr || loaded->id == 0)
+		{
+			if (loaded) delete loaded;
+			texture = nullptr;
+			ref = nullptr;
+			return;
+		}
+		texture = loaded;
+		ref = new(std::nothrow) size_t(1);
+		if (ref == nullptr)
+		{
+			UnloadTexture(*static_cast<::Texture*>(texture));
+			delete static_cast<::Texture*>(texture);
+			texture = nullptr;
+		}
+	}
+
+	SharedTexture::SharedTexture(std::u8string_view texturePath) noexcept
+	{
+		std::filesystem::path path(texturePath);
+		std::ifstream file(path, std::ios::binary);
+		if (!file)
+		{
+			texture = nullptr;
+			ref = nullptr;
+			return;
+		}
+		std::vector<uint8_t> data{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+		file.close();
+		
+		Image img = LoadImageFromMemory(path.extension().string().c_str(), data.data(), static_cast<int>(data.size()));
+		auto* loaded = new(std::nothrow) Texture2D(LoadTextureFromImage(img));
+		UnloadImage(img);
+
 		if (loaded == nullptr || loaded->id == 0)
 		{
 			if (loaded) delete loaded;
@@ -364,7 +435,7 @@ namespace ebbglow::resource
 		other.music = nullptr;
 		other.ref = nullptr;
 	}
-
+	
 	SharedMusic::SharedMusic(const char* musicPath) noexcept
 	{
 		auto* loaded = new(std::nothrow) ::Music(LoadMusicStream(musicPath));
@@ -384,6 +455,42 @@ namespace ebbglow::resource
 			music = nullptr;
 		}
 	}
+
+	/*
+	SharedMusic::SharedMusic(std::u8string_view musicPath) noexcept
+	{
+		std::filesystem::path path(musicPath);
+		std::ifstream file(path, std::ios::binary);
+		if (!file)
+		{
+			music = nullptr;
+			ref = nullptr;
+			return;
+		}
+		std::vector<uint8_t> data{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+		file.close();
+
+		auto* loaded = new(std::nothrow) ::Music(LoadMusicStreamFromMemory(path.extension().string().c_str(), data.data(), static_cast<int>(data.size())));
+		
+		if (loaded == nullptr || !IsMusicValid(*loaded))
+		{
+			if (loaded) delete loaded;
+			music = nullptr;
+			ref = nullptr;
+			return;
+		}
+		music = loaded;
+		ref = new(std::nothrow) size_t(1);
+		PlayMusicStream(*static_cast<::Music*>(music));
+		UpdateMusicStream(*static_cast<::Music*>(music));
+		if (ref == nullptr)
+		{
+			UnloadMusicStream(*static_cast<::Music*>(music));
+			delete static_cast<::Music*>(music);
+			music = nullptr;
+		}
+	}
+	*/
 
 	SharedMusic& SharedMusic::operator=(const SharedMusic& other) noexcept
 	{
@@ -570,20 +677,78 @@ namespace ebbglow::resource
 	// SharedFile й╣ож
 	SharedFile::SharedFile() noexcept : ref(nullptr), fileData(nullptr), dataSize(0), name(nullptr) {}
 
-	SharedFile::SharedFile(const char* filePath) : ref(new(std::nothrow) size_t(1))
+	SharedFile::SharedFile(const char* filePath) noexcept
 	{
 		size_t len = strlen(filePath);
 		name = new(std::nothrow) char[len + 1];
 		memcpy(name, filePath, len + 1);
-		fileData = LoadFileData(filePath, &dataSize);
+		std::ifstream file(filePath, std::ios::binary);
+		if (!file)
+		{
+			delete[] name;
+			name = nullptr;
+			fileData = nullptr;
+			dataSize = 0;
+			ref = nullptr;
+			return;
+		}
+		std::vector<uint8_t> data{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+		file.close();
+		fileData = new(std::nothrow) unsigned char[data.size()];
+		if (!fileData)
+		{
+			delete[] name;
+			name = nullptr;
+			fileData = nullptr;
+			dataSize = 0;
+			ref = nullptr;
+			return;
+		}
+		memcpy(fileData, data.data(), data.size());
+		ref = new(std::nothrow) size_t(1);
+		dataSize = data.size();
+	}
+
+	SharedFile::SharedFile(std::u8string_view filePath) noexcept
+	{
+		std::filesystem::path path(filePath);
+		std::ifstream file(path, std::ios::binary);
+		name = new(std::nothrow) char[filePath.size() + 1];
+		memcpy(name, filePath.data(), filePath.size());
+		name[filePath.size()] = '\0';
+		if (!file)
+		{
+			delete[] name;
+			name = nullptr;
+			fileData = nullptr;
+			ref = nullptr;
+			return;
+		}
+		std::vector<uint8_t> data{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+		file.close();
+		fileData = new(std::nothrow) unsigned char[data.size()];
+		if (!fileData)
+		{
+			delete[] name;
+			name = nullptr;
+			fileData = nullptr;
+			dataSize = 0;
+			ref = nullptr;
+			return;
+		}
+		memcpy(fileData, data.data(), data.size());
+		ref = new(std::nothrow) size_t(1);
+		dataSize = data.size();
 	}
 
 	SharedFile::SharedFile(unsigned char* fileData, int dataSize, const char* name) noexcept
-		: ref(new(std::nothrow) size_t(1)), fileData(fileData), dataSize(dataSize)
+		: ref(new(std::nothrow) size_t(1)), dataSize(dataSize)
 	{
 		size_t len = strlen(name);
 		this->name = new(std::nothrow) char[len + 1];
+		this->fileData = new unsigned char[dataSize];
 		memcpy(this->name, name, len + 1);
+		memcpy(this->fileData, fileData, dataSize);
 	}
 
 	SharedFile::SharedFile(const SharedFile& other) noexcept
@@ -617,7 +782,7 @@ namespace ebbglow::resource
 			{
 				delete ref;
 				delete[] name;
-				UnloadFileData(fileData);
+				delete[] fileData;
 			}
 		}
 		ref = other.ref;
@@ -644,7 +809,7 @@ namespace ebbglow::resource
 			{
 				delete ref;
 				delete[] name;
-				UnloadFileData(fileData);
+				delete[] fileData;
 			}
 		}
 		ref = other.ref;
@@ -667,7 +832,7 @@ namespace ebbglow::resource
 			{
 				delete ref;
 				delete[] name;
-				UnloadFileData(fileData);
+				delete[] fileData;
 			}
 			ref = nullptr;
 			dataSize = 0;
@@ -1053,6 +1218,38 @@ namespace ebbglow::resource
 	SharedSound::SharedSound(const char* soundPath) noexcept
 	{
 		auto* loaded = new(std::nothrow) ::Sound(LoadSound(soundPath));
+		if (loaded == nullptr || !IsSoundValid(*loaded))
+		{
+			if (loaded) delete loaded;
+			sound = nullptr;
+			ref = nullptr;
+			return;
+		}
+		sound = loaded;
+		ref = new(std::nothrow) size_t(1);
+		if (ref == nullptr)
+		{
+			UnloadSound(*static_cast<::Sound*>(sound));
+			delete static_cast<::Sound*>(sound);
+			sound = nullptr;
+		}
+	}
+
+	SharedSound::SharedSound(std::u8string_view soundPath) noexcept
+	{
+		std::filesystem::path path(soundPath);
+		std::ifstream file(path, std::ios::binary);
+		if (!file)
+		{
+			sound = nullptr;
+			ref = nullptr;
+			return;
+		}
+		std::vector<uint8_t> data{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+		file.close();
+		Wave wave = LoadWaveFromMemory(path.extension().string().c_str(), data.data(), static_cast<int>(data.size()));
+		auto* loaded = new(std::nothrow) ::Sound(LoadSoundFromWave(wave));
+		UnloadWave(wave);
 		if (loaded == nullptr || !IsSoundValid(*loaded))
 		{
 			if (loaded) delete loaded;

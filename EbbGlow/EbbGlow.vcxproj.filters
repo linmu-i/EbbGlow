@@ -168,7 +168,7 @@
     <ClCompile Include="source\EbbGlow\Utils\ResourceCreator.cpp">
       <Filter>源文件\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="source\EbbGlow\Utils\Resoure.cpp">
+    <ClCompile Include="source\EbbGlow\Utils\Resource.cpp">
       <Filter>源文件\Utils</Filter>
     </ClCompile>
     <ClCompile Include="source\EbbGlow\Utils\ThreadPool.cpp">
@@ -280,9 +280,6 @@
     </ClInclude>
     <ClInclude Include="include\EbbGlow\VisualNovel\VisualNovel\VisualNovel.h">
       <Filter>头文件\VisualNovel\VisualNovel</Filter>
-    </ClInclude>
-    <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader.h">
-      <Filter>头文件\VisualNovel</Filter>
     </ClInclude>
     <ClInclude Include="include\EbbGlow\UI\Button\Button.h">
       <Filter>头文件\UI\Button</Filter>

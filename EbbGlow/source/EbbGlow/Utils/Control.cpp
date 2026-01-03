@@ -12,7 +12,6 @@ namespace ebbglow
 	void Init(int width, int height, const std::string& title)
 	{
 		::InitWindow(width, height, title.c_str());
-		//::gladLoadGL();
 		InitAudioDevice();
 		input::InitInput();
 	}

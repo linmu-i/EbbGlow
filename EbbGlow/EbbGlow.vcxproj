@@ -77,7 +77,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(RAYLIB_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -95,7 +95,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(RAYLIB_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -111,7 +111,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(RAYLIB_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,7 +129,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(RAYLIB_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -156,7 +156,7 @@
     <ClCompile Include="source\EbbGlow\Utils\Functions.cpp" />
     <ClCompile Include="source\EbbGlow\Utils\Input_Raylib_Win32.cpp" />
     <ClCompile Include="source\EbbGlow\Utils\ResourceCreator.cpp" />
-    <ClCompile Include="source\EbbGlow\Utils\Resoure.cpp" />
+    <ClCompile Include="source\EbbGlow\Utils\Resource.cpp" />
     <ClCompile Include="source\EbbGlow\Utils\ThreadPool.cpp" />
     <ClCompile Include="source\EbbGlow\VisualNovel\ScriptLoader\GlobalFunctions.cpp" />
     <ClCompile Include="source\EbbGlow\VisualNovel\ScriptLoader\MusicManager.cpp" />
@@ -202,7 +202,6 @@
     <ClInclude Include="include\EbbGlow\Utils\RLUtils.h" />
     <ClInclude Include="include\EbbGlow\Utils\ThreadPool.h" />
     <ClInclude Include="include\EbbGlow\Utils\Types.h" />
-    <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader.h" />
     <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader\GlobalFunctions.h" />
     <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader\MainLib.h" />
     <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader\MusicManager.h" />

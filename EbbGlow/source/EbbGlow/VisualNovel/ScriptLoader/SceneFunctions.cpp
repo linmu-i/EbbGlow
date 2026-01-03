@@ -37,7 +37,7 @@ namespace ebbglow::visualnovel
 			cfg.showReadText && readIt != cfg.readTextSet.end() ? cfg.readTextColor : colors::White
 		));
 
-		rsc::SharedTexture2D backGround(GetString(args[4], *loader).c_str());
+		rsc::SharedTexture2D backGround(reinterpret_cast<const char8_t*>(GetString(args[4], *loader).c_str()));
 		float scaleX = static_cast<float>(cfg.ScreenWidth) / static_cast<float>(backGround.width());
 		float scaleY = static_cast<float>(cfg.ScreenHeight) / static_cast<float>(backGround.height());
 
@@ -115,9 +115,9 @@ namespace ebbglow::visualnovel
 		float relativeY = static_cast<float>(GetNumber(args[1], '\0', *loader));
 		float ratio = static_cast<float>(GetNumber(args[2], '\0', *loader));
 		float width = static_cast<float>(GetNumber(args[3], '\0', *loader));
-		rsc::SharedTexture2D normalImg = GetString(args[13], *loader).c_str();
-		rsc::SharedTexture2D hoverImg = GetString(args[14], *loader).c_str();
-		rsc::SharedTexture2D pressImg = GetString(args[15], *loader).c_str();
+		rsc::SharedTexture2D normalImg(reinterpret_cast<const char8_t*>(GetString(args[13], *loader).c_str()));
+		rsc::SharedTexture2D hoverImg(reinterpret_cast<const char8_t*>(GetString(args[14], *loader).c_str()));
+		rsc::SharedTexture2D pressImg(reinterpret_cast<const char8_t*>(GetString(args[15], *loader).c_str()));
 		ColorR8G8B8A8 textColor = 
 		{ 
 			static_cast<uint8_t>(round(GetNumber(args[9], '\0', *loader))),
@@ -171,7 +171,7 @@ namespace ebbglow::visualnovel
 		float relativeY = static_cast<float>(GetNumber(args[1], '\0', *loader));
 		float ratio = static_cast<float>(GetNumber(args[2], '\0', *loader));
 		float width = static_cast<float>(GetNumber(args[3], '\0', *loader));
-		rsc::SharedTexture2D img = GetString(args[4], *loader).c_str();
+		rsc::SharedTexture2D img(reinterpret_cast<const char8_t*>(GetString(args[4], *loader).c_str()));
 		float scale;
 		if (args[5] == "@Cover")
 		{
@@ -229,7 +229,7 @@ namespace ebbglow::visualnovel
 		if (args.size() < 3) return;
 		auto& cfg = loader->cfg;
 		auto& world = loader->world;
-		rsc::SharedTexture2D img = GetString(args[0], *loader).c_str();
+		rsc::SharedTexture2D img(reinterpret_cast<const char8_t*>(GetString(args[0], *loader).c_str()));
 		float scale = cfg.ScreenWidth / 1920.0f;
 		uint8_t layerDepth = static_cast<uint8_t>(GetNumber(args[1], '\0', *loader));
 		bool isLoop = args[2] == "@Loop";
@@ -243,8 +243,7 @@ namespace ebbglow::visualnovel
 	{
 		if (args.size() < 9) return;
 		auto& world = loader->world;
-		auto& animationActive = KeyframeAnimBuffer().com;//world.getDoubleBuffer<ui::KeyFramesAnimationCom>()->active()->get(loader->idList.back());
-		//auto* animationInactive = world.getDoubleBuffer<ui::KeyFramesAnimationCom>()->inactive()->get(loader->idList.back());
+		auto& animationActive = KeyframeAnimBuffer().com;
 		ui::KeyFrame keyFrame;
 		float relativeX = static_cast<float>(GetNumber(args[0], '\0', *loader));
 		float relativeY = static_cast<float>(GetNumber(args[1], '\0', *loader));
@@ -286,7 +285,7 @@ namespace ebbglow::visualnovel
 
 	void Scene_SetVoice(ScriptLoader* loader, const std::vector<std::string>& args) noexcept
 	{
-		loader->musicMgr.SetVoice(rsc::SharedSound(GetString(args[0], *loader).c_str()), loader->cfg.volumes[static_cast<size_t>(round(GetNumber(args[1], '\0', *loader)))]);
+		loader->musicMgr.SetVoice(rsc::SharedSound(reinterpret_cast<const char8_t*>(GetString(args[0], *loader).c_str())), loader->cfg.volumes[static_cast<size_t>(round(GetNumber(args[1], '\0', *loader)))]);
 	}
 }
 

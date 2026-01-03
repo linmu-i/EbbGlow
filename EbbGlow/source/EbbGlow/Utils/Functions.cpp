@@ -42,7 +42,6 @@ namespace ebbglow::utils
 		if (type == rsc::FontType::Default)
 		{
 			Font font = LoadFontFromMemory(p, fontData.get(), fontData.size(), fontSize, uniqueCodePoints.data(), uniqueCodePoints.size());
-			//SetTextureFilter(font.texture, TEXTURE_FILTER_BILINEAR);
 			rsc::SharedFont result = creator.CreateFont(font);
 			return result;
 		}
