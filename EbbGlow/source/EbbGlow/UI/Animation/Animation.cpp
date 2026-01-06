@@ -4,7 +4,20 @@
 namespace ebbglow::ui
 {
 	AnimationCom::AnimationCom(std::vector<std::string> framesPath, float totalPlayTime, Vec2 position, core::Layers* layers, size_t layerDepth) :
-		layers(layers), layerDepth(layerDepth), loop(false), stop(true), frameTimeCount(0.0f), activeFrame(0), position(position)
+		layer(&(*layers)[layerDepth]), loop(false), stop(true), frameTimeCount(0.0f), activeFrame(0), position(position)
+	{
+		frameTime.clear();
+		framesSequence.clear();
+		float time = totalPlayTime / framesPath.size();
+		for (int i = 0; i < framesPath.size(); ++i)
+		{
+			frameTime.push_back(time);
+			framesSequence.push_back(framesPath[i].c_str());
+		}
+	}
+
+	AnimationCom::AnimationCom(std::vector<std::string> framesPath, float totalPlayTime, Vec2 position, core::Layer* layer) :
+		layer(layer), loop(false), stop(true), frameTimeCount(0.0f), activeFrame(0), position(position)
 	{
 		frameTime.clear();
 		framesSequence.clear();
@@ -66,7 +79,7 @@ namespace ebbglow::ui
 				{
 
 					//²¥·Åµ±Ç°Ö¡
-					(*animationActive.layers)[animationActive.layerDepth].push_back(std::make_unique<AnimationDraw>(AnimationDraw(animationActive.framesSequence[animationActive.activeFrame], animationActive.position)));
+					(*animationActive.layer).push_back(std::make_unique<AnimationDraw>(AnimationDraw(animationActive.framesSequence[animationActive.activeFrame], animationActive.position)));
 
 					animationActive.frameTimeCount += GetFrameTime();
 					animationInactive.frameTimeCount += GetFrameTime();

@@ -8,6 +8,7 @@
 namespace ebbglow::core
 {
 	using Layers = std::array<std::vector<std::unique_ptr<DrawBase>>, 16>;
+	using Layer = std::vector<std::unique_ptr<DrawBase>>;
 
 	class AddBufferBase
 	{

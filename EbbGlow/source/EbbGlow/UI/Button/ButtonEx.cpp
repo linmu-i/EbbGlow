@@ -101,7 +101,7 @@ namespace ebbglow::ui
 				{
 					icon = 2;
 				}
-				(*act.layer)[act.layerDepth].push_back(std::make_unique<ButtonExDraw>(act, icon));
+				(*act.layer).push_back(std::make_unique<ButtonExDraw>(act, icon));
 			});
 	}
 }

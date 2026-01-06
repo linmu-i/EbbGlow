@@ -13,7 +13,7 @@ namespace ebbglow::ui
 		imgBoxes->active()->forEach([this](core::entity id, ImageBoxExCom& act)
 			{
 				auto& ina = *imgBoxes->inactive()->get(id);
-				(*act.layer)[act.layerDepth].push_back(std::make_unique<ImageBoxExDraw>(act));
+				(*act.layer).push_back(std::make_unique<ImageBoxExDraw>(act));
 			});
 	}
 }

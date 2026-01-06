@@ -34,7 +34,8 @@ namespace ebbglow::visualnovel
 			GetString(args[cfg.mainLanguage], *loader),
 			GetString(args[cfg.secondaryLanguage], *loader),
 			cfg.textSize, cfg.fontData, cfg.textSpeed, Vec2({ cfg.ScreenWidth * 0.1666667f, cfg.ScreenHeight * 0.75f }) + cfg.drawOffset, cfg.ScreenWidth * 0.6666667f,
-			cfg.showReadText && readIt != cfg.readTextSet.end() ? cfg.readTextColor : colors::White
+			cfg.showReadText && readIt != cfg.readTextSet.end() ? cfg.readTextColor : colors::White,
+			&(*world.getUiLayer())[cfg.LayerDefine.textBoxLayer]
 		));
 
 		rsc::SharedTexture2D backGround(reinterpret_cast<const char8_t*>(GetString(args[4], *loader).c_str()));

@@ -19,20 +19,23 @@ namespace ebbglow::ui
 	{
 		rsc::SharedTexture2D texture;
 		std::vector<KeyFrame> keyFrames;
-		core::Layers* layer;
-		uint8_t layerDepth;
+		core::Layer* layer;
 		int activeFrame;
 		float timeCount;
 		float scale;
 		bool stop;
 		bool loop;
 
-		KeyFramesAnimationCom() : layer(nullptr), layerDepth(0), activeFrame(0), timeCount(0.0f), scale(0.0f), stop(false), loop(false) {}
+		KeyFramesAnimationCom() : layer(nullptr), activeFrame(0), timeCount(0.0f), scale(0.0f), stop(false), loop(false) {}
 		KeyFramesAnimationCom(rsc::SharedTexture2D texture, std::vector<KeyFrame> keyFrames, core::Layers* layer, float scale, int layerDepth, bool loop) :
-			texture(texture), keyFrames(keyFrames), layer(layer), layerDepth(layerDepth), loop(loop), activeFrame(0), timeCount(0.0f), stop(false), scale(scale) {
+			texture(texture), keyFrames(keyFrames), layer(&(*layer)[layerDepth]), loop(loop), activeFrame(0), timeCount(0.0f), stop(false), scale(scale) {
 		}
 		KeyFramesAnimationCom(rsc::SharedTexture2D texture, core::Layers* layer, float scale, uint8_t layerDepth, bool loop) :
-			texture(texture), keyFrames(), layer(layer), layerDepth(layerDepth), loop(loop), activeFrame(0), timeCount(0.0f), stop(false), scale(scale) {
+			texture(texture), keyFrames(), layer(&(*layer)[layerDepth]), loop(loop), activeFrame(0), timeCount(0.0f), stop(false), scale(scale) {
+		}
+
+		KeyFramesAnimationCom(rsc::SharedTexture2D texture, std::vector<KeyFrame> keyFrames, core::Layer* layer, float scale, bool loop) :
+			texture(texture), keyFrames(keyFrames), layer(layer), loop(loop), activeFrame(0), timeCount(0.0f), stop(false), scale(scale) {
 		}
 	};
 

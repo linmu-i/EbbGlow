@@ -13,11 +13,14 @@ namespace ebbglow::ui
 		float scale;
 		float rotation;
 		Color tint;
-		uint8_t layerDepth;
-		core::Layers* layer;
+		core::Layer* layer;
 
 		ImageBoxExCom(const rsc::SharedTexture2D& img, Vec2 position, uint8_t layerDepth, core::Layers* layer, float scale = 1.0f, float rotation = 0.0f, Vec2 origin = { 0.0f, 0.0f }, Color tint = colors::White) :
-			img(img), position(position), layerDepth(layerDepth), layer(layer), scale(scale), rotation(rotation), origin(origin), tint(tint) {
+			img(img), position(position), layer(&(*layer)[layerDepth]), scale(scale), rotation(rotation), origin(origin), tint(tint) {
+		}
+
+		ImageBoxExCom(const rsc::SharedTexture2D& img, Vec2 position, core::Layer* layer, float scale = 1.0f, float rotation = 0.0f, Vec2 origin = { 0.0f, 0.0f }, Color tint = colors::White) :
+			img(img), position(position), layer(layer), scale(scale), rotation(rotation), origin(origin), tint(tint) {
 		}
 	};
 
@@ -38,6 +41,7 @@ namespace ebbglow::ui
 
 	public:
 		ImageBoxExSystem(core::World2D& world) : imgBoxes(world.getDoubleBuffer<ImageBoxExCom>()) {}
+		ImageBoxExSystem(core::DoubleComs<ImageBoxExCom>* imgBoxes) : imgBoxes(imgBoxes) {}
 		void update() override;
 	};
 

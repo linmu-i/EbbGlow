@@ -16,10 +16,9 @@ namespace ebbglow::ui
 
 	void TextBoxExSystem::update()
 	{
-		textBoxs->active()->forEach([this](core::entity id, TextBoxExCom& act)
+		textBoxes->active()->forEach([this](core::entity id, TextBoxExCom& act)
 			{
-				auto& ina = *textBoxs->inactive()->get(id);
-				(*act.layer)[act.layerDepth].push_back(std::make_unique<TextBoxExDraw>(act));
+				(*act.layer).push_back(std::make_unique<TextBoxExDraw>(act));
 			});
 	}
 }

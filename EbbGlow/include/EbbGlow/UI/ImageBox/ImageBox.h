@@ -18,7 +18,6 @@ namespace ebbglow::ui
 	private:
 		const ImageBoxCom& imgBox;
 
-
 	public:
 		ImageBoxDraw(const ImageBoxCom& imgBox) : imgBox(imgBox){}
 		void draw() override;

@@ -97,6 +97,12 @@
     <Filter Include="头文件\UI\Animation">
       <UniqueIdentifier>{30367733-b85b-4cd3-8f35-6531f124a007}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\VisualNovel\UI">
+      <UniqueIdentifier>{96021ef0-434e-4368-8e71-b324f0dfa9b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\VisualNovel\UI">
+      <UniqueIdentifier>{4dcf6d44-deb4-43ab-babe-d7316719c448}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -176,6 +182,9 @@
     </ClCompile>
     <ClCompile Include="source\EbbGlow\VisualNovel\VisualNovel\MainTextBox.cpp">
       <Filter>源文件\VisualNovel\VisualNovel</Filter>
+    </ClCompile>
+    <ClCompile Include="source\EbbGlow\VisualNovel\UI\Log.cpp">
+      <Filter>源文件\VisualNovel\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -325,6 +334,12 @@
     </ClInclude>
     <ClInclude Include="include\EbbGlow\UI\UI.h">
       <Filter>头文件\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\VisualNovel\UI\Log.h">
+      <Filter>头文件\VisualNovel\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="include\EbbGlow\Core\ECS\SubSystem.h">
+      <Filter>头文件\Core\ECS</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

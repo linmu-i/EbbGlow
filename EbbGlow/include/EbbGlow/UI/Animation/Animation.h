@@ -17,10 +17,12 @@ namespace ebbglow::ui
 
 		Vec2 position;
 
-		core::Layers* layers;
-		uint8_t layerDepth;
+		//core::Layers* layers;
+		//uint8_t layerDepth;
+		core::Layer* layer;
 
 		AnimationCom(std::vector<std::string> framesPath, float totalPlayTime, Vec2 position, core::Layers* layers, size_t layerDepth);
+		AnimationCom(std::vector<std::string> framesPath, float totalPlayTime, Vec2 position, core::Layer* layer);
 	};
 
 	class AnimationDraw : public core::DrawBase

@@ -35,7 +35,9 @@ namespace ebbglow::visualnovel
 
 		Vec2 pos;
 
-		MainTextBoxCom(const std::string& textL0, const std::string& textL1, float textSize, const rsc::SharedFile& fontData, float speed, Vec2 pos, float width, Color textColor);
+		core::Layer* layer;
+
+		MainTextBoxCom(const std::string& textL0, const std::string& textL1, float textSize, const rsc::SharedFile& fontData, float speed, Vec2 pos, float width, Color textColor, core::Layer* layer);
 	};
 
 	class MainTextBoxDraw : public core::DrawBase
@@ -56,13 +58,11 @@ namespace ebbglow::visualnovel
 	{
 	private:
 		core::DoubleComs<MainTextBoxCom>* textBoxs;
-		core::Layers* layers;
-		int layerDepth;
 		rsc::SharedRenderTexture2D textureTmp;
 		const VisualNovelConfig& cfg;
 
 	public:
-		MainTextBoxSystem(core::DoubleComs<MainTextBoxCom>* textBoxs, core::Layers* layers, int layerDepth, const VisualNovelConfig& cfg) : textBoxs(textBoxs), layers(layers), layerDepth(layerDepth), textureTmp(rsc::SharedRenderTexture(cfg.ScreenWidth, cfg.ScreenHeight)), cfg(cfg) {}
+		MainTextBoxSystem(core::DoubleComs<MainTextBoxCom>* textBoxs, const VisualNovelConfig& cfg) : textBoxs(textBoxs), textureTmp(rsc::SharedRenderTexture(cfg.ScreenWidth, cfg.ScreenHeight)), cfg(cfg) {}
 
 		void update() override;
 
@@ -75,6 +75,6 @@ namespace ebbglow::visualnovel
 	inline void ApplyMainTextBox(core::World2D& world, const VisualNovelConfig& cfg)
 	{
 		world.addPool<MainTextBoxCom>();
-		world.addSystem(MainTextBoxSystem(world.getDoubleBuffer<MainTextBoxCom>(), world.getUiLayer(), 10, cfg));
+		world.addSystem(MainTextBoxSystem(world.getDoubleBuffer<MainTextBoxCom>(), cfg));
 	}
 }

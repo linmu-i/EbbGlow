@@ -5,8 +5,8 @@
 
 namespace ebbglow::visualnovel
 {
-	MainTextBoxCom::MainTextBoxCom(const std::string& textL0, const std::string& textL1, float textSize, const rsc::SharedFile& fontData, float speed, Vec2 pos, float width, Color textColor) :
-		textSize(textSize), spacing(textSize * 0.1f), lineSpacing(textSize * 0.3f), speed(speed), timeCount(0.0f), drawing(true),
+	MainTextBoxCom::MainTextBoxCom(const std::string& textL0, const std::string& textL1, float textSize, const rsc::SharedFile& fontData, float speed, Vec2 pos, float width, Color textColor, core::Layer* layer) :
+		textSize(textSize), spacing(textSize * 0.1f), lineSpacing(textSize * 0.3f), speed(speed), timeCount(0.0f), drawing(true), layer(layer),
 		font(utils::DynamicLoadFont(fontData, textL0 + textL1, textSize * 1.5f)), textStr(textL0), activePixel(0),
 		textHeight(std::max(utils::MeasureTextSize(font, textL0, textSize, spacing).y, utils::MeasureTextSize(font, textL1, textSize, spacing).y)), pos(pos)
 	{
@@ -132,7 +132,7 @@ namespace ebbglow::visualnovel
 					EndShaderMode();
 					EndTextureMode();
 				}
-				(*layers)[layerDepth].push_back(std::make_unique<MainTextBoxDraw>(comActive.pos, textureTmp));
+				(*comActive.layer).push_back(std::make_unique<MainTextBoxDraw>(comActive.pos, textureTmp));
 			}
 		);
 

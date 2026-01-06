@@ -19,7 +19,7 @@ namespace ebbglow::ui
 
 				if (activeCom.activeFrame == 0)
 				{
-					(*(activeCom.layer))[activeCom.layerDepth].push_back
+					(*(activeCom.layer)).push_back
 					(
 						std::make_unique<KeyFramesAnimationDraw>
 						(
@@ -36,7 +36,7 @@ namespace ebbglow::ui
 				{
 					float deltaScale = activeCom.timeCount / activeCom.keyFrames[activeCom.activeFrame].duration;
 					deltaScale = std::clamp(deltaScale, 0.0f, 1.0f);
-					(*(activeCom.layer))[activeCom.layerDepth].push_back
+					(*(activeCom.layer)).push_back
 					(
 						std::make_unique<KeyFramesAnimationDraw>
 						(

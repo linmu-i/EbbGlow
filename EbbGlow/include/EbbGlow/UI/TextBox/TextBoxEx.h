@@ -21,12 +21,16 @@ namespace ebbglow::ui
 		float spacing;
 		Color textColor;
 
-		core::Layers* layer;
-		uint8_t layerDepth;
+		core::Layer* layer;
 
 		TextBoxExCom(const rsc::SharedFile& fontData, const std::string& text, Vec2 position, float textSize, float spacing, Color textColor, core::Layers* layer, uint8_t layerDepth, rsc::FontType fontType = rsc::FontType::Default, rsc::SharedShader sdfShader = gfx::GetDefaultSDFShader()) : fontData(fontData),
-			text(text), position(position), textSize(textSize), spacing(spacing), textColor(textColor), layer(layer), layerDepth(layerDepth), fontType(fontType),
+			text(text), position(position), textSize(textSize), spacing(spacing), textColor(textColor), layer(&(*layer)[layerDepth]), fontType(fontType),
 			font(utils::DynamicLoadFont(fontData, text, fontType == rsc::FontType::Default ? textSize : 96, fontType)), sdfShader(sdfShader){
+		}
+
+		TextBoxExCom(const rsc::SharedFile& fontData, const std::string& text, Vec2 position, float textSize, float spacing, Color textColor, core::Layer* layer, rsc::FontType fontType = rsc::FontType::Default, rsc::SharedShader sdfShader = gfx::GetDefaultSDFShader()) : fontData(fontData),
+			text(text), position(position), textSize(textSize), spacing(spacing), textColor(textColor), layer(layer), fontType(fontType),
+			font(utils::DynamicLoadFont(fontData, text, fontType == rsc::FontType::Default ? textSize : 96, fontType)), sdfShader(sdfShader) {
 		}
 	};
 
@@ -43,11 +47,11 @@ namespace ebbglow::ui
 	class TextBoxExSystem : public core::SystemBase
 	{
 	private:
-		core::DoubleComs<TextBoxExCom>* textBoxs;
-		core::Layers* layer;
+		core::DoubleComs<TextBoxExCom>* textBoxes;
 
 	public:
-		TextBoxExSystem(core::World2D& world) : textBoxs(world.getDoubleBuffer<TextBoxExCom>()), layer(world.getUiLayer()) {}
+		TextBoxExSystem(core::World2D& world) : textBoxes(world.getDoubleBuffer<TextBoxExCom>()) {}
+		TextBoxExSystem(core::DoubleComs<TextBoxExCom>* textBoxes) : textBoxes(textBoxes) {}
 		void update() override;
 	};
 

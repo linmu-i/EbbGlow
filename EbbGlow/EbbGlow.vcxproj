@@ -164,6 +164,7 @@
     <ClCompile Include="source\EbbGlow\VisualNovel\ScriptLoader\SceneTypes.cpp" />
     <ClCompile Include="source\EbbGlow\VisualNovel\ScriptLoader\ScriptData.cpp" />
     <ClCompile Include="source\EbbGlow\VisualNovel\ScriptLoader\ScriptLoader.cpp" />
+    <ClCompile Include="source\EbbGlow\VisualNovel\UI\Log.cpp" />
     <ClCompile Include="source\EbbGlow\VisualNovel\VisualNovel\MainTextBox.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -171,6 +172,7 @@
     <ClInclude Include="include\EbbGlow\Core\ECS\ComponentPool.h" />
     <ClInclude Include="include\EbbGlow\Core\ECS\ECSType.h" />
     <ClInclude Include="include\EbbGlow\Core\ECS\IdManager.h" />
+    <ClInclude Include="include\EbbGlow\Core\ECS\SubSystem.h" />
     <ClInclude Include="include\EbbGlow\Core\Message.h" />
     <ClInclude Include="include\EbbGlow\Core\Message\MessageManager.h" />
     <ClInclude Include="include\EbbGlow\Core\Message\MessageType.h" />
@@ -210,6 +212,7 @@
     <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader\ScriptData.h" />
     <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader\ScriptLoader.h" />
     <ClInclude Include="include\EbbGlow\VisualNovel\ScriptLoader\ScriptLoaderTypes.h" />
+    <ClInclude Include="include\EbbGlow\VisualNovel\UI\Log.h" />
     <ClInclude Include="include\EbbGlow\VisualNovel\VisualNovel.h" />
     <ClInclude Include="include\EbbGlow\VisualNovel\VisualNovel\MainTextBox.h" />
     <ClInclude Include="include\EbbGlow\VisualNovel\VisualNovel\VisualNovel.h" />
