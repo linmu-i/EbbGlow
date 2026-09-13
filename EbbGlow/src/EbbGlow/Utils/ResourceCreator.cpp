@@ -3,7 +3,7 @@
 
 namespace ebbglow::resource
 {
-	SharedFont ResourceCreator::CreateFont(::Font font) const noexcept
+	SharedFont ResourceCreator::CreateFont(::Font font) noexcept
 	{
 		SharedFont result;
 		if (!::IsFontValid(font)) return result;
@@ -17,7 +17,7 @@ namespace ebbglow::resource
 		return result;
 	};
 
-	SharedTexture ResourceCreator::CreateTexture(::Texture2D texture) const noexcept
+	SharedTexture ResourceCreator::CreateTexture(::Texture2D texture) noexcept
 	{
 		SharedTexture result;
 		if (!::IsTextureValid(texture)) return result;
@@ -31,7 +31,7 @@ namespace ebbglow::resource
 		return result;
 	}
 
-	SharedShader ResourceCreator::CreateShader(::Shader shader) const noexcept
+	SharedShader ResourceCreator::CreateShader(::Shader shader) noexcept
 	{
 		SharedShader result;
 		if (!::IsShaderValid(shader)) return result;
@@ -45,7 +45,7 @@ namespace ebbglow::resource
 		return result;
 	}
 
-	SharedImage ResourceCreator::CreateImage(::Image img) const noexcept
+	SharedImage ResourceCreator::CreateImage(::Image img) noexcept
 	{
 		SharedImage result;
 		if (!::IsImageValid(img)) return result;

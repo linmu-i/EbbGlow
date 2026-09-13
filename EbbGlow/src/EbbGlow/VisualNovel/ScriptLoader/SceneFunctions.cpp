@@ -184,6 +184,7 @@ namespace ebbglow::visualnovel
 		float ratio = static_cast<float>(GetNumber(args[2], '\0', *loader));
 		float width = static_cast<float>(GetNumber(args[3], '\0', *loader));
 		rsc::SharedTexture2D img(reinterpret_cast<const char8_t*>(GetString(args[4], *loader).c_str()));
+		
 		float scale;
 		if (args[5] == "@Cover")
 		{

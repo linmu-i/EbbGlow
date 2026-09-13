@@ -48,7 +48,15 @@ namespace ebbglow::resource
 	{
 		std::atomic<size_t> refCnt;
 		::RenderTexture renderTexture;
-		RenderTextureBlock(size_t refCnt, ::RenderTexture renderTexture) : refCnt(refCnt), renderTexture(renderTexture) {}
+
+		SharedTexture texture;
+		SharedTexture depth;
+
+		RenderTextureBlock(size_t refCnt, ::RenderTexture renderTexture) : refCnt(refCnt), renderTexture(renderTexture)
+		{
+			texture = ResourceCreator::CreateTexture(renderTexture.texture);
+			depth = ResourceCreator::CreateTexture(renderTexture.depth);
+		}
 	};
 
 	struct SoundBlock

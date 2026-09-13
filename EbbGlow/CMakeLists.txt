@@ -1,4 +1,4 @@
-﻿cmake_minimum_required (VERSION 3.12)
+cmake_minimum_required (VERSION 3.12)
 
 project(EbbGlow VERSION 0.0.0)
 add_library(EbbGlow STATIC)
@@ -57,6 +57,8 @@ set(UI_YUI_SOURCES
 	"src/EbbGlow/UI/YUI/ImageBox/YUIImageBox.cpp"
 	"src/EbbGlow/UI/YUI/Button/YUIButtonLogic.cpp"
 	"src/EbbGlow/UI/YUI/Button/YUIFillButtonVisual.cpp"
+	"src/EbbGlow/UI/YUI/Button/YUIInvertButtonVisual.cpp"
+	"src/EbbGlow/UI/YUI/Button/YUIImageButtonVisual.cpp"
 	"src/EbbGlow/UI/YUI/Button/YUIButtonMessage.cpp"
 	"src/EbbGlow/UI/YUI/Button/YUIButtonOnClick.cpp"
 	"src/EbbGlow/UI/YUI/TextBox/YUITextBox.cpp"

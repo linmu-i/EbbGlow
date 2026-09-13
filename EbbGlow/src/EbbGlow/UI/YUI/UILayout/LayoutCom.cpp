@@ -7,6 +7,8 @@
 #include <EbbGlow/UI/YUI/UILayout/ContextStack.h>
 #include <EbbGlow/UI/YUI/YUIBasic.h>
 #include <EbbGlow/UI/YUI/Button/YUIButton.h>
+#include <EbbGlow/UI/YUI/Button/YUIInvertButtonVisual.h>
+#include <EbbGlow/UI/YUI/Button/YUIImageButtonVisual.h>
 #include <EbbGlow/UI/YUI/TextBox/YUITextBox.h>
 
 namespace ebbglow::ui::yui::layout
@@ -491,5 +493,142 @@ namespace ebbglow::ui::yui::layout
 
 		context.addChild(id, size, layout, callback);
 	};
+
+	//反色按钮：复用 ButtonLogic / ButtonOnClick / LayerCom，仅将绘制组件替换为 InvertButtonVisual
+	void InvertButton::operator()()
+	{
+		auto& context = GetContextStack();
+		auto& world = context.getWorld();
+
+		auto id = context.getNextId();
+		auto parentId = context.getCurrentParent();
+
+		TransformCom trans{};
+		TransformAttachTo(trans, parentId);
+
+		ControlCom ctrl{};
+		ControlAttachTo(ctrl, parentId);
+
+		ViewPortCom vp{};
+		ViewPortAttachTo(vp, parentId);
+
+		ButtonLogic logic{};//复用既有交互状态机，保证悬停/按下判定一致
+		InvertButtonVisual invertVisual
+		{
+			.deepColor = deepColor,
+			.midColor = midColor,
+			.lightColor = lightColor,
+			.theme = theme,
+			.font = font,
+			.fontSize = fontSize,
+			.spacing = spacing,
+			.text = text,
+			.roundness = roundness
+		};
+
+		ButtonOnClick onClickCom{ .callback = onClick };
+
+		LayerCom layerCom{ .layer = &(*context.getWorld().getUiLayer())[layerDepth] };
+
+		world.createUnit(id, trans, ctrl, vp, logic, invertVisual, onClickCom, layerCom);
+
+		Vec2 size{};
+
+		if (widthMode == SizeMode::Pixels) size.x = widthValue;
+		if (heightMode == SizeMode::Pixels) size.y = heightValue;
+
+		if (widthMode == SizeMode::Auto || heightMode == SizeMode::Auto)
+		{
+			auto textSize = utils::MeasureTextSize(font, text, fontSize, spacing);
+			if (widthMode == SizeMode::Auto) size.x = textSize.x + 20.0f;
+			if (heightMode == SizeMode::Auto) size.y = textSize.y + 10.0f;
+		}
+
+		UILayout layout
+		{
+			.widthMode = widthMode,
+			.widthValue = widthValue,
+			.heightMode = heightMode,
+			.heightValue = heightValue,
+			.alignment = alignment
+		};
+
+		auto callback = [](ChildData& selfData)
+			{
+				auto& world = GetContextStack().getWorld();
+				auto& ctrl = *world.getWaitAdd<ControlCom>(selfData.childId);
+				ctrl.interactiveArea = Rect{ 0.0f, 0.0f, selfData.size.x, selfData.size.y };
+			};
+
+		context.addChild(id, size, layout, callback);
+	}
+
+	//图片按钮：复用 ButtonLogic / ButtonOnClick / LayerCom，仅将绘制组件替换为 ImageButtonVisual（三图直切，无渐变）
+	void ImageButton::operator()()
+	{
+		auto& context = GetContextStack();
+		auto& world = context.getWorld();
+
+		auto id = context.getNextId();
+		auto parentId = context.getCurrentParent();
+
+		TransformCom trans{};
+		TransformAttachTo(trans, parentId);
+
+		ControlCom ctrl{};
+		ControlAttachTo(ctrl, parentId);
+
+		ViewPortCom vp{};
+		ViewPortAttachTo(vp, parentId);
+
+		ButtonLogic logic{};//复用既有交互状态机，保证悬停/按下判定一致
+		ImageButtonVisual imageVisual
+		{
+			.normalIcon = normalIcon,
+			.hoverIcon = hoverIcon,
+			.pressedIcon = pressedIcon,
+			.fitMode = fitMode,
+			.tint = tint
+		};
+
+		ButtonOnClick onClickCom{ .callback = onClick };
+
+		LayerCom layerCom{ .layer = &(*context.getWorld().getUiLayer())[layerDepth] };
+
+		world.createUnit(id, trans, ctrl, vp, logic, imageVisual, onClickCom, layerCom);
+
+		Vec2 size{};
+
+		if (widthMode == SizeMode::Pixels) size.x = widthValue;
+		if (heightMode == SizeMode::Pixels) size.y = heightValue;
+
+		//Auto 尺寸：按常态图片的自然尺寸测量
+		if (widthMode == SizeMode::Auto || heightMode == SizeMode::Auto)
+		{
+			if (normalIcon.valid())
+			{
+				if (widthMode == SizeMode::Auto) size.x = static_cast<float>(normalIcon.width());
+				if (heightMode == SizeMode::Auto) size.y = static_cast<float>(normalIcon.height());
+			}
+		}
+
+		UILayout layout
+		{
+			.widthMode = widthMode,
+			.widthValue = widthValue,
+			.heightMode = heightMode,
+			.heightValue = heightValue,
+			.alignment = alignment
+		};
+
+		auto callback = [](ChildData& selfData)
+			{
+				auto& world = GetContextStack().getWorld();
+				auto& ctrl = *world.getWaitAdd<ControlCom>(selfData.childId);
+				ctrl.interactiveArea = Rect{ 0.0f, 0.0f, selfData.size.x, selfData.size.y };
+			};
+
+		context.addChild(id, size, layout, callback);
+	}
 
 }

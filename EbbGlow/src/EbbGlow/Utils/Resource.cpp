@@ -1128,7 +1128,10 @@ namespace ebbglow::resource
 			--(static_cast<RenderTextureBlock*>(data)->refCnt);
 			if (static_cast<RenderTextureBlock*>(data)->refCnt == 0)
 			{
-				::UnloadRenderTexture(static_cast<RenderTextureBlock*>(data)->renderTexture);
+				RenderTexture& rt = static_cast<RenderTextureBlock*>(data)->renderTexture;
+				rt.depth = {};
+				rt.texture = {};
+				::UnloadRenderTexture(rt);
 				delete static_cast<RenderTextureBlock*>(data);
 			}
 			data = nullptr;
@@ -1145,6 +1148,34 @@ namespace ebbglow::resource
 	{
 		if (data) return &(static_cast<RenderTextureBlock*>(data)->renderTexture);
 		return nullptr;
+	}
+
+	SharedTexture& SharedRenderTexture::texture() noexcept
+	{
+		if (data) return static_cast<RenderTextureBlock*>(data)->texture;
+		static SharedTexture empty;
+		return empty;
+	}
+	
+	const SharedTexture& SharedRenderTexture::texture() const noexcept
+	{
+		if (data) return static_cast<RenderTextureBlock*>(data)->texture;
+		static SharedTexture empty;
+		return empty;
+	}
+
+	SharedTexture& SharedRenderTexture::depth() noexcept
+	{
+		if (data) return static_cast<RenderTextureBlock*>(data)->depth;
+		static SharedTexture empty;
+		return empty;
+	}
+
+	const SharedTexture& SharedRenderTexture::depth() const noexcept
+	{
+		if (data) return static_cast<RenderTextureBlock*>(data)->depth;
+		static SharedTexture empty;
+		return empty;
 	}
 
 #pragma endregion

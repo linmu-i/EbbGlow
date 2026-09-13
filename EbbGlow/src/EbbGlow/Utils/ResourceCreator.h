@@ -6,9 +6,9 @@ namespace ebbglow::resource
 	class ResourceCreator
 	{
 	public:
-		SharedFont CreateFont(::Font font) const noexcept;
-		SharedTexture CreateTexture(::Texture2D texture) const noexcept;
-		SharedShader CreateShader(::Shader shader) const noexcept;
-		SharedImage CreateImage(::Image img) const noexcept;
+		static SharedFont CreateFont(::Font font) noexcept;
+		static SharedTexture CreateTexture(::Texture2D texture) noexcept;
+		static SharedShader CreateShader(::Shader shader) noexcept;
+		static SharedImage CreateImage(::Image img) noexcept;
 	};
 }

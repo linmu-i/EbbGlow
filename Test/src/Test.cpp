@@ -98,7 +98,9 @@ int main()
 
 	ui::yui::ApplyYUI(world);
 
-	auto idList = ui::yui::layout::UICreator{ .world = &world }([&fontData]
+	Color btColor = 0xff9999ff;
+
+	auto idList = ui::yui::layout::UICreator{ .world = &world }([&fontData, btColor]
 	{
 		using namespace ebbglow::ui::yui::layout;
 		Column{}([&]
@@ -122,6 +124,7 @@ int main()
 				.widthValue = 200.0f,
 				.heightMode = SizeMode::Pixels,
 				.heightValue = 100.0f,
+				.color = btColor,
 				.font = ebbglow::utils::DynamicLoadFont(fontData, "测试", 48),
 				.fontSize = 48.0f,
 				.text = "测试"
@@ -133,6 +136,7 @@ int main()
 				.widthValue = 200.0f,
 				.heightMode = SizeMode::Pixels,
 				.heightValue = 100.0f,
+				.color = btColor,
 				.font = ebbglow::utils::DynamicLoadFont(fontData, "测试", 48),
 				.fontSize = 48.0f,
 				.text = "测试",
@@ -144,6 +148,37 @@ int main()
 			}();
 
 			Spacer{.heightMode = SizeMode::Weight, .heightValue = 1.0f }();
+
+			InvertButton
+			{
+				.widthMode = SizeMode::Pixels,
+				.widthValue = 200.0f,
+				.heightMode = SizeMode::Pixels,
+				.heightValue = 70.0f,
+				.deepColor = 0x600000FF,
+				.midColor = 0xFF9999FF,
+				.lightColor = 0xFFFFFFFF,
+				.theme = ui::yui::InvertButtonTheme::Dark,
+				.font = ebbglow::utils::DynamicLoadFont(fontData, "测试", 48),
+				.fontSize = 48.0f,
+				.text = "测试",
+				.roundness = 0.1f
+			}();
+
+			Spacer{ .heightMode = SizeMode::Weight, .heightValue = 1.0f }();
+
+			ImageButton
+			{
+				.widthMode = SizeMode::Auto,
+				.heightMode = SizeMode::Auto,
+
+				.normalIcon = rsc::SharedTexture{"resource/img/Button0.png"},
+				.hoverIcon = rsc::SharedTexture{"resource/img/Button1.png"},
+				.pressedIcon = rsc::SharedTexture{"resource/img/Button2.png"}
+
+			}();
+
+			Spacer{ .heightMode = SizeMode::Weight, .heightValue = 1.0f }();
 		});
 	});
 		

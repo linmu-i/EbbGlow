@@ -340,6 +340,11 @@ namespace ebbglow::resource
 		const void* get() const noexcept;
 
 		void release() noexcept;
+
+		SharedTexture& texture() noexcept;
+		const SharedTexture& texture() const noexcept;
+		SharedTexture& depth() noexcept;
+		const SharedTexture& depth() const noexcept;
 	};
 
 	typedef SharedRenderTexture SharedRenderTexture2D;
