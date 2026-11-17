@@ -4,8 +4,8 @@
 
 #include <EbbGlow/Core/World.h>
 #include <EbbGlow/UI/YUI/UILayout/Layout.h>
-#include <EbbGlow/UI/YUI/Button/YUIInvertButtonVisual.h>
-#include <EbbGlow/UI/YUI/Button/YUIImageButtonVisual.h>
+#include <EbbGlow/UI/YUI/Button/InvertButtonVisual.h>
+#include <EbbGlow/UI/YUI/Button/ImageButtonVisual.h>
 
 namespace ebbglow::ui::yui::layout
 {
@@ -13,8 +13,10 @@ namespace ebbglow::ui::yui::layout
 	{
 		core::World2D* world = nullptr;
 		std::vector<core::entity> idList = {};
+		core::DrawPriorityT beginDrawPriority = 0;
 
 		std::vector<core::entity> operator()(std::function<void()> func);
+		std::vector<core::entity> operator>>(std::function<void()> func);
 	};
 
 	struct [[nodiscard]] Column
@@ -28,6 +30,7 @@ namespace ebbglow::ui::yui::layout
 		AlignmentType alignment = Alignment::Center | Alignment::Middle;
 
 		void operator()(std::function<void()> func);
+		void operator>>(std::function<void()> func);
 	};
 
 	struct [[nodiscard]] Row
@@ -41,6 +44,7 @@ namespace ebbglow::ui::yui::layout
 		AlignmentType alignment = Alignment::Center | Alignment::Middle;
 
 		void operator()(std::function<void()> func);
+		void operator>>(std::function<void()> func);
 	};
 
 	struct [[nodiscard]] Spacer
@@ -67,6 +71,7 @@ namespace ebbglow::ui::yui::layout
 		AlignmentType alignment = Alignment::Center | Alignment::Middle;
 
 		void operator()(std::function<void()> func);
+		void operator>>(std::function<void()> func);
 	};
 
 	struct [[nodiscard]] Button
@@ -93,7 +98,9 @@ namespace ebbglow::ui::yui::layout
 
 		float roundness = 0.2f;
 
+		std::function<void(core::World2D&, core::entity)> onPress;
 		std::function<void(core::World2D&, core::entity)> onClick;
+		std::function<void(core::World2D&, core::entity)> onCancel;
 
 		void operator()();
 	};
@@ -125,7 +132,9 @@ namespace ebbglow::ui::yui::layout
 
 		float roundness = 0.2f;
 
+		std::function<void(core::World2D&, core::entity)> onPress;
 		std::function<void(core::World2D&, core::entity)> onClick;
+		std::function<void(core::World2D&, core::entity)> onCancel;
 
 		void operator()();
 	};
@@ -150,7 +159,9 @@ namespace ebbglow::ui::yui::layout
 
 		uint8_t layerDepth = 8;
 
+		std::function<void(core::World2D&, core::entity)> onPress;
 		std::function<void(core::World2D&, core::entity)> onClick;
+		std::function<void(core::World2D&, core::entity)> onCancel;
 
 		void operator()();
 	};

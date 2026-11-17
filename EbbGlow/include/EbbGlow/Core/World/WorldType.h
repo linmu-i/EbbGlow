@@ -7,28 +7,48 @@
 
 namespace ebbglow::core
 {
+	namespace DrawPriority
+	{
+		using Type = uint16_t;
+	};
+	
+	using DrawPriorityT = DrawPriority::Type;
+
+	struct LayerItem
+	{
+		DrawBase* pkt;
+		DrawPriorityT priority;
+	};
+
 	class Layer
 	{
 	private:
 		std::vector<std::unique_ptr<DrawBase>> storageArr;
-		std::vector<DrawBase*> drawArr;
+		std::vector<LayerItem> drawArr;
 		std::unique_ptr<std::mutex> mtx;
 
 	public:
 		Layer() : mtx(std::make_unique<std::mutex>()) {}
-		Layer& push_back(std::unique_ptr<DrawBase>&& package)
+		Layer& add(std::unique_ptr<DrawBase>&& package, DrawPriorityT priority)
 		{
 			std::lock_guard<std::mutex> lock(*mtx);
 			storageArr.push_back(std::move(package));
-			drawArr.push_back(storageArr.back().get());
+			drawArr.push_back({storageArr.back().get(), priority});
 			return *this;
 		}
-		Layer& push_back(DrawBase* package)
+		Layer& addRef(DrawBase* package, DrawPriorityT priority)
 		{
 			std::lock_guard<std::mutex> lock(*mtx);
-			drawArr.push_back(package);
+			drawArr.push_back({package,	priority});
 			return *this;
 			
+		}
+		void draw()
+		{
+			for (auto& pktRef : drawArr)
+			{
+				pktRef.pkt->draw();
+			}
 		}
 		void clear() noexcept
 		{
@@ -37,8 +57,13 @@ namespace ebbglow::core
 		}
 		auto begin() noexcept { return drawArr.begin(); }
 		auto end() noexcept { return drawArr.end(); }
+		void sort() noexcept
+		{
+			std::sort(drawArr.begin(), drawArr.end(), [](const LayerItem& a, const LayerItem& b) { return a.priority < b.priority; });
+		}
 	};
 
+	/*
 	class Layers
 	{
 	private:
@@ -64,6 +89,7 @@ namespace ebbglow::core
 			}
 		}
 	};
+	*/
 
 	class AddBufferBase
 	{
@@ -108,6 +134,36 @@ namespace ebbglow::core
 		void deleteUnit(core::entity id) override
 		{
 			buffer.erase(std::remove_if(buffer.begin(), buffer.end(), [id](const std::pair<entity, T>& dat) {return dat.first == id; }), buffer.end());
+		}
+	};
+
+	namespace SystemPriority
+	{
+		using Type = uint16_t;
+
+		constexpr Type Highest = 0;
+		constexpr Type High = 2000;
+		constexpr Type Normal = 20000;
+		constexpr Type Low = 40000;
+		constexpr Type Lowest = 65535;
+	};
+
+	using SystemPriorityT = SystemPriority::Type;
+
+	enum class SystemExecutionPolicies
+	{
+		Sequential,
+		Detached,
+	};
+
+	struct SystemItem
+	{
+		std::unique_ptr<SystemBase> system;
+		SystemPriorityT priority = 0;
+		SystemExecutionPolicies executionPolicy = SystemExecutionPolicies::Sequential;
+		SystemItem() = default;
+		SystemItem(std::unique_ptr<SystemBase> sys, SystemPriorityT prio, SystemExecutionPolicies policy)
+			: system(std::move(sys)), priority(prio), executionPolicy(policy) {
 		}
 	};
 }

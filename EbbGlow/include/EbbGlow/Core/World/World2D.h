@@ -12,21 +12,21 @@ namespace ebbglow::core
 	class World2D
 	{
 	private:
-		int screenX;
-		int screenY;
 		IdManager entityManager;
 		std::unordered_map<std::type_index, std::unique_ptr<ComponentPoolBase>> comPools0;
 		std::unordered_map<std::type_index, std::unique_ptr<ComponentPoolBase>> comPools1;
 		std::unordered_map<std::type_index, std::unique_ptr<DoubleBufferedBase>> doubleBuffered;
 
-		std::vector<std::unique_ptr<SystemBase>> systems;
-		Layers unitsLayer;
-		Layers uiLayer;
+		std::vector<SystemItem> systems;
+		Layer unitsLayer;
+		Layer uiLayer;
 		MessageManager messageManager;
 		Camera2D camera;
 
 		std::vector<entity> waitDelete;
 		std::unordered_map<std::type_index, std::unique_ptr<AddBufferBase>> waitAdd;
+
+		utils::ThreadPool* threadPool = nullptr;
 
 		template<typename T>
 		ComponentPool<T>* getPool0()
@@ -58,18 +58,19 @@ namespace ebbglow::core
 		uint64_t framesCount = 0;
 
 		IdManager* getEntityManager() { return &entityManager; }
-		Layers* getUnitsLayer() { return &unitsLayer; }
-		Layers* getUiLayer() { return &uiLayer; }
+		Layer* getUnitsLayer() { return &unitsLayer; }
+		Layer* getUiLayer() { return &uiLayer; }
 		Camera2D* getCamera() { return &camera; }
 		MessageManager* getMessageManager() { return &messageManager; }
 
-		World2D(int screenX, int screenY) : screenX(screenX), screenY(screenY)
+		World2D() = default;
+		World2D& setThreadPool(utils::ThreadPool* tp)
 		{
-			camera.offset = { 0,0 };
-			camera.target = { 0,0 };
-			camera.rotation = 0.0f;
-			camera.zoom = 1.0f;
+			threadPool = tp;
+			return *this;
 		}
+
+		utils::ThreadPool* getThreadPool() { return threadPool; }
 
 		template<typename T>
 		World2D& addPool()
@@ -96,10 +97,20 @@ namespace ebbglow::core
 			}
 		}
 		template<typename T>
-		World2D& addSystem(T&& sys)
+		World2D& addSystem(T&& sys, SystemPriorityT priority = SystemPriority::Normal, SystemExecutionPolicies exePolicies = SystemExecutionPolicies::Sequential)
 		{
 			if (getSystem<T>()) return *this;
-			systems.push_back(std::make_unique<std::decay_t<T>>(std::forward<T>(sys)));
+			auto sysPtr = std::make_unique<std::decay_t<T>>(std::forward<T>(sys));
+			systems.resize(systems.size() + 1);
+			auto it = systems.end() - 1;
+			auto begin = systems.begin();
+			while (it != begin)
+			{
+				if ((it - 1)->priority <= priority) break;
+				*it = std::move(*(it - 1));
+				--it;
+			}
+			*it = SystemItem{ std::move(sysPtr), priority, exePolicies };
 			return *this;
 		}
 		template<typename T>
@@ -107,7 +118,7 @@ namespace ebbglow::core
 		{
 			for (auto& s : systems)
 			{
-				if (typeid(*s) == typeid(T)) return static_cast<T*>(s.get());
+				if (typeid(*s.system) == typeid(T)) return static_cast<T*>(s.system.get());
 			}
 			return nullptr;
 		}

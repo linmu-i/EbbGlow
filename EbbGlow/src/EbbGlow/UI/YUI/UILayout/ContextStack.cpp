@@ -2,14 +2,14 @@
 
 namespace ebbglow::ui::yui::layout
 {
-	static thread_local ContextStack contextStack(nullptr, {});
+	static thread_local ContextStack contextStack(nullptr, {}, 0);
 
 	ContextStack& GetContextStack()
 	{
 		return contextStack;
 	}
-	void InitContextStack(core::World2D& world, std::vector<core::entity> idList)
+	void InitContextStack(core::World2D& world, std::vector<core::entity> idList, core::DrawPriorityT beginDrawPriority)
 	{
-		contextStack = ContextStack(&world, std::move(idList));
+		contextStack = ContextStack(&world, std::move(idList), beginDrawPriority);
 	}
 }

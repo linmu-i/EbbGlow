@@ -6,17 +6,18 @@
 #include <EbbGlow/UI/YUI/UILayout/LayoutCom.h>
 #include <EbbGlow/UI/YUI/UILayout/ContextStack.h>
 #include <EbbGlow/UI/YUI/YUIBasic.h>
-#include <EbbGlow/UI/YUI/Button/YUIButton.h>
-#include <EbbGlow/UI/YUI/Button/YUIInvertButtonVisual.h>
-#include <EbbGlow/UI/YUI/Button/YUIImageButtonVisual.h>
-#include <EbbGlow/UI/YUI/TextBox/YUITextBox.h>
+#include <EbbGlow/UI/YUI/Button/Button.h>
+#include <EbbGlow/UI/YUI/Button/ButtonCallback.h>
+#include <EbbGlow/UI/YUI/Button/InvertButtonVisual.h>
+#include <EbbGlow/UI/YUI/Button/ImageButtonVisual.h>
+#include <EbbGlow/UI/YUI/TextBox/TextBox.h>
 
 namespace ebbglow::ui::yui::layout
 {
 	std::vector<core::entity> UICreator::operator()(std::function<void()> func)
 	{
 		if (!world) return {};
-		InitContextStack(*world, std::move(idList));
+		InitContextStack(*world, std::move(idList), beginDrawPriority);
 
 		Vec2 ScSize = utils::ScreenSize();
 
@@ -37,6 +38,11 @@ namespace ebbglow::ui::yui::layout
 		}
 
 		return GetContextStack().getIdList();
+	}
+
+	std::vector<core::entity> UICreator::operator>>(std::function<void()> func)
+	{
+		return this->operator()(func);
 	}
 
 	void Column::operator()(std::function<void()> func)
@@ -140,6 +146,11 @@ namespace ebbglow::ui::yui::layout
 		context.addChild(id, size, layout, callback);
 	}
 
+	void Column::operator>>(std::function<void()> func)
+	{
+		this->operator()(func);
+	}
+
 	void Row::operator()(std::function<void()> func)
 	{
 		auto& context = GetContextStack();
@@ -230,6 +241,11 @@ namespace ebbglow::ui::yui::layout
 			};
 
 		context.addChild(id, size, layout, callback);
+	}
+
+	void Row::operator>>(std::function<void()> func)
+	{
+		this->operator()(func);
 	}
 
 	void Spacer::operator()()
@@ -366,6 +382,11 @@ namespace ebbglow::ui::yui::layout
 
 		context.addChild(id, size, layout, callback);
 	}
+
+	void Box::operator>>(std::function<void()> func)
+	{
+		this->operator()(func);
+	}
 	
 	void Button::operator()()
 	{
@@ -397,12 +418,14 @@ namespace ebbglow::ui::yui::layout
 			.roundness = roundness
 		};
 
-		ButtonOnClick onClickCom{ .callback = onClick };
+		auto depth = context.depth();
 
-		LayerCom layerCom{ .layer = &(*context.getWorld().getUiLayer())[layerDepth] };
+		ButtonMessage msg = { .priority = static_cast<ClickPriorityT>(ClickPriority::MaxValue - depth) };//UI层级越高depth越大，点击优先级越高，对应数值越低
+		ButtonCallback callbackCom{ .onPress = onPress, .onClick = onClick, .onCancel = onCancel };
 
-		world.createUnit(id, trans, ctrl, vp, logic, fillVisual, onClickCom, layerCom);
+		LayerCom layerCom{ .layer = context.getWorld().getUiLayer(), .priority = static_cast<core::DrawPriorityT>(context.getBeginDrawPriority() + depth)};
 
+		world.createUnit(id, trans, ctrl, vp, logic, fillVisual, callbackCom, msg, layerCom);
 		Vec2 size{};
 
 		if (widthMode == SizeMode::Pixels) size.x = widthValue;
@@ -469,7 +492,7 @@ namespace ebbglow::ui::yui::layout
 			.alignment = alignment
 		};
 
-		LayerCom layerCom{ .layer = &(*context.getWorld().getUiLayer())[layerDepth] };
+		LayerCom layerCom{ .layer = context.getWorld().getUiLayer(), .priority = static_cast<core::DrawPriorityT>(context.getBeginDrawPriority() + context.depth()) };
 
 		world.createUnit(id, trans, ctrl, vp, textBox, layerCom);
 
@@ -526,12 +549,14 @@ namespace ebbglow::ui::yui::layout
 			.roundness = roundness
 		};
 
-		ButtonOnClick onClickCom{ .callback = onClick };
+		auto depth = context.depth();
 
-		LayerCom layerCom{ .layer = &(*context.getWorld().getUiLayer())[layerDepth] };
+		ButtonMessage msg = { .priority = static_cast<ClickPriorityT>(ClickPriority::MaxValue - depth) };
+		ButtonCallback callbackCom{ .onPress = onPress, .onClick = onClick, .onCancel = onCancel };
 
-		world.createUnit(id, trans, ctrl, vp, logic, invertVisual, onClickCom, layerCom);
+		LayerCom layerCom{ .layer = context.getWorld().getUiLayer(), .priority = static_cast<core::DrawPriorityT>(context.getBeginDrawPriority() + depth) };
 
+		world.createUnit(id, trans, ctrl, vp, logic, invertVisual, callbackCom, msg, layerCom);
 		Vec2 size{};
 
 		if (widthMode == SizeMode::Pixels) size.x = widthValue;
@@ -591,12 +616,14 @@ namespace ebbglow::ui::yui::layout
 			.tint = tint
 		};
 
-		ButtonOnClick onClickCom{ .callback = onClick };
+		auto depth = context.depth();
 
-		LayerCom layerCom{ .layer = &(*context.getWorld().getUiLayer())[layerDepth] };
+		ButtonMessage msg = { .priority = static_cast<ClickPriorityT>(ClickPriority::MaxValue - depth) };
+		ButtonCallback callbackCom{ .onPress = onPress, .onClick = onClick, .onCancel = onCancel };
 
-		world.createUnit(id, trans, ctrl, vp, logic, imageVisual, onClickCom, layerCom);
+		LayerCom layerCom{ .layer = context.getWorld().getUiLayer(), .priority = static_cast<core::DrawPriorityT>(context.getBeginDrawPriority() + depth) };
 
+		world.createUnit(id, trans, ctrl, vp, logic, imageVisual, callbackCom, msg, layerCom);
 		Vec2 size{};
 
 		if (widthMode == SizeMode::Pixels) size.x = widthValue;

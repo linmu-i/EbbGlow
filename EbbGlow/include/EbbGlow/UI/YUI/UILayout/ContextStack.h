@@ -29,8 +29,11 @@ namespace ebbglow::ui::yui::layout
 		std::vector<core::entity> idList;
 		size_t currentIndex = 0;
 
+		core::DrawPriorityT beginDrawPriority = 0;
+
 	public:
-		ContextStack(core::World2D* world, std::vector<core::entity> idList) : world(world), idList(std::move(idList)) {}
+		ContextStack(core::World2D* world, std::vector<core::entity> idList, core::DrawPriorityT beginDrawPriority) :
+			world(world), idList(std::move(idList)), beginDrawPriority(beginDrawPriority) {}
 		void pushContext(core::entity parentId)
 		{
 			stack.push_back({ parentId, {} });
@@ -91,6 +94,16 @@ namespace ebbglow::ui::yui::layout
 		{
 			return idList;
 		}
+
+		size_t depth()
+		{
+			return stack.size();
+		}
+
+		core::DrawPriorityT getBeginDrawPriority() const
+		{
+			return beginDrawPriority;
+		}
 	};
 
 	ContextStack& GetContextStack();
@@ -107,5 +120,5 @@ namespace ebbglow::ui::yui::layout
 			GetContextStack().popContext();
 		}
 	};
-	void InitContextStack(core::World2D& world, std::vector<core::entity> idList = {});
+	void InitContextStack(core::World2D& world, std::vector<core::entity> idList = {}, core::DrawPriorityT beginDrawPriority = 0);
 }

@@ -15,6 +15,7 @@ namespace ebbglow::core
 		MessageBase(entity senderId, MessageTypeId typeId) : senderId(senderId), type(typeId) {}
 		entity getSender() const { return senderId; }
 		MessageTypeId getType() const { return type; }
+		virtual ~MessageBase() = default;
 	};
 
 	using MessageList = ComponentPool<std::vector<MessageBase*>>;

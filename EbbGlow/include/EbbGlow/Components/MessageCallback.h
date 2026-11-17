@@ -1,7 +1,7 @@
 #pragma once
 
 #include <EbbGlow/Core/Message.h>
-#include <EbbGlow/UI/Button/ButtonMsg.h>
+#include <EbbGlow/UI/YUI/Button/ButtonMessage.h>
 #include <EbbGlow/Core/World.h>
 
 namespace ebbglow::components

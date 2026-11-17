@@ -1,12 +1,12 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <EbbGlow/Graphics/Graphics.h>
-#include <EbbGlow/VisualNovel/VisualNovel.h>
+//#include <EbbGlow/VisualNovel/VisualNovel.h>
 #include <EbbGlow/Utils/Control.h>
 
 //const char* FONT_PATH = R"(D:\Downloads\GSdefaultfonts.ttf)";//
 //const char* FONT_PATH = R"(resource/font/Noto_Sans_SC/static/NotoSansSC-SemiBold.ttf)";
-ebbglow::vn::VisualNovelConfig CFG;
+//ebbglow::vn::VisualNovelConfig CFG;
 
 /*
 int main()
@@ -85,6 +85,7 @@ int main()
 
 #include <EbbGlow/UI/YUI/YUI.h>
 
+const char* FONT_PATH = R"(resource/font/Noto_Sans_SC/static/NotoSansSC-SemiBold.ttf)";
 
 int main()
 {
@@ -92,18 +93,18 @@ int main()
 	ebbglow::Init(1280, 720, "");
 	ebbglow::SetTargetFPS(120);
 
-	rsc::SharedFile fontData(std::filesystem::path{ "resource/font/Noto_Sans_SC/static/NotoSansSC-SemiBold.ttf" });
+	ebbglow::rsc::SharedFile fontData{ FONT_PATH };
 
-	core::World2D world(ebbglow::utils::ScreenSize().x, ebbglow::utils::ScreenSize().y);
+	core::World2D world{};
 
 	ui::yui::ApplyYUI(world);
 
 	Color btColor = 0xff9999ff;
 
-	auto idList = ui::yui::layout::UICreator{ .world = &world }([&fontData, btColor]
+	auto idList = ui::yui::layout::UICreator{ .world = &world } >> [&fontData, btColor]
 	{
 		using namespace ebbglow::ui::yui::layout;
-		Column{}([&]
+		Column{} >> [&]
 		{
 			Spacer{.heightMode = SizeMode::Weight, .heightValue = 0.50f}();
 
@@ -179,8 +180,8 @@ int main()
 			}();
 
 			Spacer{ .heightMode = SizeMode::Weight, .heightValue = 1.0f }();
-		});
-	});
+		};
+	};
 		
 
 	while (!ebbglow::WindowShouldClose())

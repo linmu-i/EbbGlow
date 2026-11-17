@@ -8,27 +8,17 @@ namespace ebbglow::core
 	void World2D::draw()
 	{
 		gfx::ClearBackground(colors::Black);
+
 		BeginMode2D(camera);
-		for (int i = 0; i < 16; i++)
-		{
-			for (auto& d : unitsLayer[i])
-			{
-				d->draw();
-			}
-		}
+		unitsLayer.sort();
+		unitsLayer.draw();
 		EndMode2D();
-		for (int i = 0; i < 16; i++)
-		{
-			for (auto& d : uiLayer[i])
-			{
-				d->draw();
-			}
-		}
-		for (int i = 0; i < 16; i++)
-		{
-			uiLayer[i].clear();
-			unitsLayer[i].clear();
-		}
+
+		uiLayer.sort();
+		uiLayer.draw();
+
+		uiLayer.clear();
+		unitsLayer.clear();
 	}
 
 	void World2D::update()
@@ -60,10 +50,27 @@ namespace ebbglow::core
 		}
 		waitDelete.clear();
 		messageManager.sendAll();
+
+		std::vector<std::future<void>> futures;
+
 		for (auto& s : systems)
 		{
-			s->update();
+			if (s.executionPolicy == SystemExecutionPolicies::Detached && threadPool)
+			{
+				auto systemPtr = s.system.get();
+				futures.push_back(threadPool->enqueue([systemPtr]() { systemPtr->update(); }));
+			}
+			else
+			{
+				s.system->update();
+			}
 		}
+
+		for (auto& f : futures)
+		{
+			f.wait();
+		}
+
 		for (auto& b : doubleBuffered)
 		{
 			b.second->swap();

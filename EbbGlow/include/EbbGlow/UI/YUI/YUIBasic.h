@@ -1,6 +1,6 @@
 #pragma once
 
-#include <EbbGlow/UI/YUI/YUITransform.h>
-#include <EbbGlow/UI/YUI/YUIControl.h>
-#include <EbbGlow/UI/YUI/YUIView.h>
-#include <EbbGlow/UI/YUI/YUILayerCom.h>
+#include <EbbGlow/UI/YUI/Transform.h>
+#include <EbbGlow/UI/YUI/Control.h>
+#include <EbbGlow/UI/YUI/View.h>
+#include <EbbGlow/UI/YUI/LayerCom.h>

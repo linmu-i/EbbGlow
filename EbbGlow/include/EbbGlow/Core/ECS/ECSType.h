@@ -4,8 +4,6 @@
 
 namespace ebbglow::core
 {
-	//using entity = uint64_t;
-
 	using EntityIndexT = uint32_t;
 	using EntityVersionT = uint32_t;
 
@@ -59,12 +57,12 @@ namespace ebbglow::core
 		virtual void update() = 0;
 	};
 
-	struct RenderPackageFlags
+	struct DrawableFlags
 	{
 		uint64_t flags = 0ull;
 
-		constexpr RenderPackageFlags() = default;
-		constexpr RenderPackageFlags(uint64_t flags) : flags(flags) {}
+		constexpr DrawableFlags() = default;
+		constexpr DrawableFlags(uint64_t flags) : flags(flags) {}
 
 		operator uint64_t() const { return flags; }
 
@@ -83,7 +81,7 @@ namespace ebbglow::core
 		DrawBase() = default;
 		virtual ~DrawBase() = default;
 		virtual void draw() = 0;
-		virtual RenderPackageFlags getFlags() { return { RenderPackageFlags::None }; }
+		virtual DrawableFlags getFlags() { return { DrawableFlags::None }; }
 	};
 
 	class DoubleBufferedBase

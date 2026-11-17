@@ -9,6 +9,7 @@ namespace ebbglow::ui::yui
 		world.addPool<ViewPortCom>();
 		world.addPool<LayerCom>();
 
+		ApplyClickDispatch(world);
 		ApplyImageBox(world);
 		ApplyButton(world);
 		ApplyTextBox(world);
