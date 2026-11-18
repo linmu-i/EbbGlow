@@ -6,7 +6,7 @@ namespace ebbglow::core
 	{
 		if (inactive.empty())
 		{
-			return entity(countId++, 0);
+			return entity(maxIdx++, 0);
 		}
 		else
 		{
@@ -23,6 +23,6 @@ namespace ebbglow::core
 
 	size_t IdManager::size() const
 	{
-		return countId - inactive.size();
+		return static_cast<size_t>(maxIdx) - inactive.size();
 	}
 }
