@@ -4,6 +4,7 @@
 
 #include <raylib.h>
 #include <EbbGlow/Resources/Resources.h>
+#include "ResourceCreator.h"
 
 namespace ebbglow::resource
 {

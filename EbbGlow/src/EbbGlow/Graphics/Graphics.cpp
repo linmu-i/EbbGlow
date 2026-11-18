@@ -4,7 +4,7 @@
 #include <EbbGlow/Utils/Control.h>
 #include <EbbGlow/Utils/Math.h>
 #include "../Utils/RLTypesCast.h"
-#include "../Utils/ResourceCreator.h"
+#include "../Resources/ResourceCreator.h"
 
 namespace ebbglow::gfx
 {

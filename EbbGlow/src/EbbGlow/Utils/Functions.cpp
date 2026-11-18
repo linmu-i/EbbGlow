@@ -7,7 +7,7 @@
 #include <EbbGlow/Utils/Functions.h>
 
 #include <raylib.h>
-#include "ResourceCreator.h"
+#include "../Resources/ResourceCreator.h"
 
 namespace ebbglow::utils
 {

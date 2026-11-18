@@ -39,7 +39,16 @@ set(UTILS_SOURCES
 )
 
 set(RESOURCES_SOURCES
-	"src/EbbGlow/Resources/Resources.cpp"
+	"src/EbbGlow/Resources/SharedFile.cpp"
+	"src/EbbGlow/Resources/SharedFileConstIterator.cpp"
+	"src/EbbGlow/Resources/SharedFileIterator.cpp"
+	"src/EbbGlow/Resources/SharedFont.cpp"
+	"src/EbbGlow/Resources/SharedImage.cpp"
+	"src/EbbGlow/Resources/SharedMusic.cpp"
+	"src/EbbGlow/Resources/SharedRenderTexture.cpp"
+	"src/EbbGlow/Resources/SharedShader.cpp"
+	"src/EbbGlow/Resources/SharedSound.cpp"
+	"src/EbbGlow/Resources/SharedTexture.cpp"
 	"src/EbbGlow/Resources/ResourceCreator.cpp"
 )
 

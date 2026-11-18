@@ -1,3 +1,5 @@
+#pragma once
+
 #include <raylib.h>
 #include <EbbGlow/Resources/Resources.h>
 
