@@ -7,7 +7,7 @@ namespace ebbglow::core
 	class IdManager
 	{
 	private:
-		uint64_t countId = 0;
+		EntityIndexT maxIdx = 0;
 		std::set<entity> inactive;
 	public:
 		entity getId();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <limits>
 
 namespace ebbglow::core
 {
@@ -12,17 +13,17 @@ namespace ebbglow::core
 	class entity
 	{
 	private:
-		uint32_t index_;
-		uint32_t version_;
+		EntityIndexT idx;
+		EntityVersionT ver;
 
 	public:
-		constexpr entity() : index_(InvalidIndex), version_(0xffffffffu) {}
-		constexpr entity(uint32_t index, uint32_t version) : index_(index), version_(version) {}
-		constexpr uint32_t index() const { return index_; }
-		constexpr uint32_t version() const { return version_; }
+		constexpr entity() : idx(InvalidIndex), ver(0xffffffffu) {}
+		constexpr entity(EntityIndexT index, EntityVersionT version) : idx(index), ver(version) {}
+		constexpr EntityIndexT index() const { return idx; }
+		constexpr EntityVersionT version() const { return ver; }
 		constexpr bool operator==(const entity& other) const
 		{
-			return index_ == other.index_ && version_ == other.version_;
+			return idx == other.idx && ver == other.ver;
 		}
 		constexpr bool operator!=(const entity& other) const
 		{
@@ -30,15 +31,15 @@ namespace ebbglow::core
 		}
 		constexpr bool operator<(const entity& other) const
 		{
-			return index_ < other.index_;
+			return idx < other.idx;
 		}
 		constexpr bool operator>(const entity& other) const
 		{
-			return index_ > other.index_;
+			return idx > other.idx;
 		}
 	};
 	
-	constexpr entity InvalidEntity = entity(0xffffffffu, 0xffffffffu);
+	constexpr entity InvalidEntity = entity(std::numeric_limits<EntityIndexT>::max(), std::numeric_limits<EntityVersionT>::max());
 
 	template<typename T>
 	class DoubleBuffered;
