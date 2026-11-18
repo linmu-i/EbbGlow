@@ -34,9 +34,13 @@ set(UTILS_SOURCES
 	"src/EbbGlow/Utils/Control.cpp"
 	"src/EbbGlow/Utils/Functions.cpp"
 	"src/EbbGlow/Utils/Input_Raylib_Win32.cpp"
-	"src/EbbGlow/Utils/Resource.cpp"
-	"src/EbbGlow/Utils/ResourceCreator.cpp"
 	"src/EbbGlow/Utils/ThreadPool.cpp"
+	"src/EbbGlow/Utils/stb_truetype_implement.cpp"
+)
+
+set(RESOURCES_SOURCES
+	"src/EbbGlow/Resources/Resources.cpp"
+	"src/EbbGlow/Resources/ResourceCreator.cpp"
 )
 
 set(UI_YUI_SOURCES
@@ -55,7 +59,7 @@ set(UI_YUI_SOURCES
 	"src/EbbGlow/UI/YUI/UILayout/ContextStack.cpp"
 	"src/EbbGlow/UI/YUI/UILayout/LayoutCom.cpp"
 	"src/EbbGlow/UI/YUI/Click/ClickDispatch.cpp"
- "src/EbbGlow/UI/YUI/Button/ButtonMessage.cpp")
+	"src/EbbGlow/UI/YUI/Button/ButtonMessage.cpp")
 
 set(COMPONENTS_SOURCES
 	"src/EbbGlow/Components/Children.cpp"
@@ -85,6 +89,7 @@ target_sources(EbbGlow PRIVATE
 	${CORE_SOURCES}
 	${GRAPHICS_SOURCES}
 	${UTILS_SOURCES}
+	${RESOURCES_SOURCES}
 	${UI_YUI_SOURCES}
 	${COMPONENTS_SOURCES}
 	#${VISUALNOVEL_SOURCES}

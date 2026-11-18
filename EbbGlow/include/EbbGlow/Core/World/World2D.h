@@ -4,7 +4,7 @@
 #include <memory>
 
 #include <EbbGlow/Core/World/WorldType.h>
-#include <EbbGlow/Utils/Resource.h>
+#include <EbbGlow/Resources/Resources.h>
 #include <EbbGlow/Utils/Types.h>
 
 namespace ebbglow::core

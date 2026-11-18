@@ -1,7 +1,6 @@
 #pragma once
 
 #include <EbbGlow/Core/World.h>
-#include <EbbGlow/Utils/Resource.h>
 
 #include <EbbGlow/UI/YUI/YUIBasic.h>
 

@@ -1,7 +1,6 @@
 #include <EbbGlow/Core/World/World2D.h>
 #include <EbbGlow/Graphics/Graphics.h>
 #include <EbbGlow/Utils/Control.h>
-#include <EbbGlow/Utils/Resource.h>
 
 namespace ebbglow::core
 {

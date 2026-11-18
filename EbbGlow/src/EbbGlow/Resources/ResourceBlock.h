@@ -3,7 +3,7 @@
 #include <atomic>
 
 #include <raylib.h>
-#include <EbbGlow/Utils/Resource.h>
+#include <EbbGlow/Resources/Resources.h>
 
 namespace ebbglow::resource
 {

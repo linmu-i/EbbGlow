@@ -1,7 +1,7 @@
 #pragma once
 
 #include <EbbGlow/Utils/Types.h>
-#include <EbbGlow/Utils/Resource.h>
+#include <EbbGlow/Resources/Resources.h>
 
 #include <string>
 
