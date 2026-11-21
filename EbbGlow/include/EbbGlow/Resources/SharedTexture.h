@@ -29,6 +29,9 @@ namespace ebbglow::resource
 		int height() const noexcept;
 		Vec2 size() const noexcept;
 
+		uint32_t id() const noexcept;
+		PixelFormat pixelFormat() const noexcept;
+
 		void* get() noexcept;
 		const void* get() const noexcept;
 

@@ -105,6 +105,23 @@ namespace ebbglow::resource
 		return Vec2{ static_cast<float>(width()), static_cast<float>(height())};
 	}
 
+	PixelFormat SharedTexture::pixelFormat() const noexcept
+	{
+		if (data == nullptr) return PixelFormat::Other;
+		switch (static_cast<TextureBlock*>(data)->texture.format)
+		{
+		case PIXELFORMAT_UNCOMPRESSED_R8G8B8A8: return PixelFormat::R8G8B8A8;
+		case PIXELFORMAT_UNCOMPRESSED_GRAYSCALE: return PixelFormat::GrayScale;
+		default: return PixelFormat::Other;
+		}
+	}
+
+	uint32_t SharedTexture::id() const noexcept
+	{
+		if (data == nullptr) return 0;
+		return static_cast<TextureBlock*>(data)->texture.id;
+	}
+
 	void SharedTexture::release() noexcept
 	{
 		if (data)

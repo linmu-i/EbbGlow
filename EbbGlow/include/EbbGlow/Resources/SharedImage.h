@@ -29,10 +29,20 @@ namespace ebbglow::resource
 		int width() const noexcept;
 		int height() const noexcept;
 		Vec2 size() const noexcept;
+		PixelFormat pixelFormat() const noexcept;
+		uint8_t* pixelData() noexcept;
+		const uint8_t* pixelData() const noexcept;
 
 		void* get() noexcept;
 		const void* get() const noexcept;
 
 		void release() noexcept;
+	};
+
+	enum class PixelFormat : uint8_t
+	{
+		R8G8B8A8,
+		GrayScale,
+		Other
 	};
 }
